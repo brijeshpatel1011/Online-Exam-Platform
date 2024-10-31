@@ -15,7 +15,6 @@ public class User {
     private String password;
     @Enumerated(EnumType.STRING)
     private Role role;
-    private boolean enabled; // New field to mark if the examinee has been added by an examiner
+    private boolean enabled;
 
-    // Getters and Setters
 }
