@@ -22,7 +22,7 @@ An online examination platform that allows examiners to create exams with MCQ an
 - **Examinee functionalities**:
   - Login and access assigned exams
   - Complete MCQ and programming sections within a given time
-- **Real-time results and performance analytics**
+- **Real-time results **
 
 ## Tech Stack
 
@@ -76,13 +76,13 @@ To set up and run this project locally, follow these instructions.
 
 1. Open SQL Server Management Studio (SSMS).
 2. Create a database named `OnlineExamDB`.
-3. Run the SQL scripts found in `/backend/sql` (if provided) to create the necessary tables.
+3. Run the SQL scripts found in `/backend/sql` to create the necessary tables.
 
 ### Running the Application
 
 1. Start the Spring Boot backend by running the main application class in your IDE.
 2. Start the React frontend by running `npm start` in the `frontend` directory.
 
-Once both are running, you should be able to access the application at [http://localhost:3000](http://localhost:3000).
+Once both are running, you should be able to access the application at [http://localhost:3000].
 
 
