@@ -1,7 +1,9 @@
 package com.backend.service;
 
+import com.backend.model.Candidate;
 import com.backend.model.Examiner;
 import com.backend.model.LoginRequest;
+import com.backend.repository.CandidateRepository;
 import com.backend.repository.ExaminerRepository;
 import com.backend.security.JwtTokenProvider;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,11 +12,15 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+// AuthService.java
 @Service
 public class AuthService {
 
     @Autowired
     private ExaminerRepository examinerRepository;
+
+    @Autowired
+    private CandidateRepository candidateRepository;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -33,9 +39,24 @@ public class AuthService {
         examinerRepository.save(examiner);
     }
 
-    public String authenticateUser(LoginRequest loginRequest) {
+    public void registerCandidate(Candidate candidate) {
+        if (candidateRepository.findByEmail(candidate.getEmail()).isPresent()) {
+            throw new IllegalArgumentException("Candidate with this email already exists.");
+        }
+        candidate.setPassword(passwordEncoder.encode(candidate.getPassword()));
+        candidateRepository.save(candidate);
+    }
+
+    public String authenticateExaminer(LoginRequest loginRequest) {
+        authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
+        return jwtTokenProvider.generateToken(loginRequest.getEmail());
+    }
+
+    public String authenticateCandidate(LoginRequest loginRequest) {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
         return jwtTokenProvider.generateToken(loginRequest.getEmail());
     }
 }
+

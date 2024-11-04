@@ -1,5 +1,6 @@
 package com.backend.controller;
 
+import com.backend.model.Candidate;
 import com.backend.model.Examiner;
 import com.backend.model.JwtResponse;
 import com.backend.model.LoginRequest;
@@ -9,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+// AuthController.java
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
@@ -21,14 +23,26 @@ public class AuthController {
 
     @PostMapping("/register/examiner")
     public ResponseEntity<?> registerExaminer(@RequestBody Examiner examiner) {
-
         authService.registerExaminer(examiner);
         return ResponseEntity.ok("Examiner registered successfully");
     }
 
-    @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
-        String token = authService.authenticateUser(loginRequest);
+    @PostMapping("/register/candidate")
+    public ResponseEntity<?> registerCandidate(@RequestBody Candidate candidate) {
+        authService.registerCandidate(candidate);
+        return ResponseEntity.ok("Candidate registered successfully");
+    }
+
+    @PostMapping("/login/examiner")
+    public ResponseEntity<?> loginExaminer(@RequestBody LoginRequest loginRequest) {
+        String token = authService.authenticateExaminer(loginRequest);
+        return ResponseEntity.ok(new JwtResponse(token));
+    }
+
+    @PostMapping("/login/candidate")
+    public ResponseEntity<?> loginCandidate(@RequestBody LoginRequest loginRequest) {
+        String token = authService.authenticateCandidate(loginRequest);
         return ResponseEntity.ok(new JwtResponse(token));
     }
 }
+

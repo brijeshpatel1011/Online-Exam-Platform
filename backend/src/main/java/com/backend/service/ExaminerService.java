@@ -27,7 +27,7 @@ public class ExaminerService {
 
     public void deleteCandidate(Long cId) {
         if (!candidateRepository.existsById(cId)) {
-            throw new IllegalArgumentException("Candidate with this ID does not exist.");
+            throw new IllegalArgumentException("Candidate with ID " + cId + " does not exist.");
         }
         candidateRepository.deleteById(cId);
     }
@@ -37,10 +37,12 @@ public class ExaminerService {
         if (existingCandidate.isPresent()) {
             Candidate candidate = existingCandidate.get();
             candidate.setEmail(updatedCandidate.getEmail());
-            candidate.setPassword(passwordEncoder.encode(updatedCandidate.getPassword()));
+            if (updatedCandidate.getPassword() != null && !updatedCandidate.getPassword().isEmpty()) {
+                candidate.setPassword(passwordEncoder.encode(updatedCandidate.getPassword()));
+            }
             return candidateRepository.save(candidate);
         } else {
-            throw new IllegalArgumentException("Candidate with this ID does not exist.");
+            throw new IllegalArgumentException("Candidate with ID " + candidateId + " does not exist.");
         }
     }
 }
