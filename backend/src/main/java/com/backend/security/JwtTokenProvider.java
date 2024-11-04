@@ -11,7 +11,6 @@ public class JwtTokenProvider {
     private final String jwtSecret;
     private final long jwtExpirationMs;
 
-    // Constructor-based injection for @Value
     public JwtTokenProvider(
             @Value("${jwt.secret}") String jwtSecret,
             @Value("${jwt.expiration}") long jwtExpirationMs) {

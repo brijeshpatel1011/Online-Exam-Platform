@@ -20,5 +20,4 @@ public class Candidate {
     private Date birthdate;
     private String password;
 
-    // Getters and Setters
 }

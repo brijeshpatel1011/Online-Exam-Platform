@@ -15,5 +15,4 @@ public class Examiner {
     private String phone;
     private String password;
 
-    // Getters and Setters
 }

@@ -38,7 +38,6 @@ public class ExaminerService {
             Candidate candidate = existingCandidate.get();
             candidate.setEmail(updatedCandidate.getEmail());
             candidate.setPassword(passwordEncoder.encode(updatedCandidate.getPassword()));
-            // Update other fields as needed
             return candidateRepository.save(candidate);
         } else {
             throw new IllegalArgumentException("Candidate with this ID does not exist.");
