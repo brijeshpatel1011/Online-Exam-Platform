@@ -2,11 +2,15 @@ package com.backend.service;
 
 import com.backend.model.Candidate;
 import com.backend.repository.CandidateRepository;
+import org.apache.poi.ss.usermodel.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
+import java.io.IOException;
+import java.util.List;
+import org.springframework.web.multipart.MultipartFile;
+
 
 @Service
 public class ExaminerService {
@@ -33,16 +37,80 @@ public class ExaminerService {
     }
 
     public Candidate updateCandidate(Long candidateId, Candidate updatedCandidate) {
-        Optional<Candidate> existingCandidate = candidateRepository.findById(candidateId);
-        if (existingCandidate.isPresent()) {
-            Candidate candidate = existingCandidate.get();
-            candidate.setEmail(updatedCandidate.getEmail());
-            if (updatedCandidate.getPassword() != null && !updatedCandidate.getPassword().isEmpty()) {
-                candidate.setPassword(passwordEncoder.encode(updatedCandidate.getPassword()));
+        Candidate existingCandidate = candidateRepository.findById(candidateId)
+                .orElseThrow(() -> new IllegalArgumentException("candidate not found"));
+
+                existingCandidate.setName(updatedCandidate.getName());
+                existingCandidate.setCollege(updatedCandidate.getCollege());
+                existingCandidate.setEmail(updatedCandidate.getEmail());
+                existingCandidate.setPhone(updatedCandidate.getPhone());
+                existingCandidate.setBirthdate(updatedCandidate.getBirthdate());
+                existingCandidate.setPassword(passwordEncoder.encode(updatedCandidate.getPassword()));
+
+            return candidateRepository.saveAndFlush(existingCandidate);
+        }
+
+    public List<Candidate> getAllCandidates() {
+        return candidateRepository.findAll();
+    }
+
+    public List<Candidate> getCandidatesByCollege(String college) {
+        return candidateRepository.findByCollege(college);
+    }
+
+    public void registerCandidatesFromFile(MultipartFile file) throws IOException {
+        try (Workbook workbook = WorkbookFactory.create(file.getInputStream())) {
+            Sheet sheet = workbook.getSheetAt(0);
+
+            int rowNum = 1;
+            for (Row row : sheet) {
+                if (rowNum > 0) {
+                    try {
+                        Candidate candidate = new Candidate();
+
+                        candidate.setName(getStringValue(row.getCell(0)));
+                        candidate.setCollege(getStringValue(row.getCell(1)));
+                        candidate.setEmail(getStringValue(row.getCell(2)));
+                        candidate.setPhone(getStringValue(row.getCell(3)));
+
+                        Cell dateCell = row.getCell(4);
+                        if (dateCell != null) {
+                            candidate.setBirthdate(dateCell.getDateCellValue());
+                        }
+
+                        candidate.setPassword(getStringValue(row.getCell(5)));
+
+                        if (isValidCandidate(candidate)) {
+                            candidate.setPassword(passwordEncoder.encode(candidate.getPassword()));
+                            candidateRepository.save(candidate);
+                        }
+                    } catch (Exception e) {
+                        System.err.println("Error processing row " + rowNum + ": " + e.getMessage());
+                    }
+                }
+                rowNum++;
             }
-            return candidateRepository.save(candidate);
-        } else {
-            throw new IllegalArgumentException("Candidate with ID " + candidateId + " does not exist.");
         }
     }
+
+    private String getStringValue(Cell cell) {
+        if (cell == null) {
+            return "";
+        }
+        switch (cell.getCellType()) {
+            case STRING:
+                return cell.getStringCellValue().trim();
+            case NUMERIC:
+                return String.valueOf((long) cell.getNumericCellValue());
+            default:
+                return "";
+        }
+    }
+
+    private boolean isValidCandidate(Candidate candidate) {
+        return candidate.getName() != null && !candidate.getName().isEmpty() &&
+                candidate.getEmail() != null && !candidate.getEmail().isEmpty() &&
+                candidate.getPassword() != null && candidate.getPassword().length() >= 6;
+    }
 }
+

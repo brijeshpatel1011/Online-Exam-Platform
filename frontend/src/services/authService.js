@@ -1,4 +1,3 @@
-// src/services/authService.js
 import axios from 'axios';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api/auth';
@@ -17,7 +16,7 @@ export const loginExaminer = async (data) => {
 };
 
 export const registerCandidate = async (data, token) => {
-  return axios.post('/api/examiner/register/candidate', data, {
+  return axios.post('http://localhost:8080/api/examiner/register/candidate', data, {
     headers: { Authorization: `Bearer ${token}` },
   });
 };

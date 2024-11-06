@@ -10,7 +10,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-// AuthController.java
 @RestController
 @CrossOrigin(origins = "http://localhost:3000")
 @RequestMapping("/api/auth")
