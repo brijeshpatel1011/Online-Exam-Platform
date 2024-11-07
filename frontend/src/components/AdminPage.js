@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Search, UserPlus, Users, FileText, LogOut, Filter, Trash2, Edit, Eye } from 'lucide-react';
+import { Search, UserPlus, Users, FileText, LogOut, Filter, Trash2, Edit } from 'lucide-react';
 import { getToken, logout } from '../services/authService';
+import Results from '../components/Result';
+import Questions from '../components/Questions';
 
 const AdminPage = () => {
   const navigate = useNavigate();
@@ -14,10 +16,15 @@ const AdminPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [editCandidateId, setEditCandidateId] = useState(null);
+  const [file, setFile] = useState(null);
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     college: '',
+    phone: '',
+    birthdate:'',
     password: ''
   });
 
@@ -30,8 +37,8 @@ const fetchCandidates = async () => {
   try {
     const token = getToken();
     const endpoint = selectedCollege === 'all'
-      ? 'http://localhost:8080/api/examiner/candidates'
-      : 'http://localhost:8080/api/examiner/candidates/college/${selectedCollege}';
+      ? `http://localhost:8080/api/examiner/candidates`
+      : `http://localhost:8080/api/examiner/candidates/college/${selectedCollege}`;
 
     const response = await axios.get(endpoint, {
       headers: { Authorization: `Bearer ${token}` }
@@ -50,28 +57,48 @@ const fetchCandidates = async () => {
   }
 };
 
+const handleEdit = (candidate) => {
+  setEditCandidateId(candidate.cid);
+  setFormData({
+    name: candidate.name,
+    email: candidate.email,
+    college: candidate.college,
+    phone: candidate.phone,
+    birthdate: candidate.birthdate,
+    password: ''
+  });
+  setShowRegisterModal(true);
+};
+
   const handleRegister = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
-      await axios.post('http://localhost:8080/api/examiner/register/candidate', formData, {
-        headers: { Authorization: `Bearer ${getToken()}` }
-      });
+      if (editCandidateId) {
+        await axios.put(`http://localhost:8080/api/examiner/update/candidate/${editCandidateId}`, formData, {
+          headers: { Authorization: `Bearer ${getToken()}` }
+        });
+      } else {
+        await axios.post(`http://localhost:8080/api/examiner/register/candidate`, formData, {
+          headers: { Authorization: `Bearer ${getToken()}` }
+        });
+      }
       setShowRegisterModal(false);
       fetchCandidates();
-      setFormData({ name: '', email: '', college: '', password: '' });
+      setFormData({ name: '', email: '', college: '', phone: '', birthdate: '', password: '' });
+      setEditCandidateId(null);
       setError('');
     } catch (err) {
-      setError('Failed to register candidate');
+      setError(editCandidateId ? 'Failed to update candidate' : 'Failed to register candidate');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (cid) => {
     if (window.confirm('Are you sure you want to delete this candidate?')) {
       try {
-        await axios.delete('http://localhost:8080/api/examiner/delete/candidate/${id}', {
+        await axios.delete(`http://localhost:8080/api/examiner/delete/candidate/${cid}`, {
           headers: { Authorization: `Bearer ${getToken()}` }
         });
         fetchCandidates();
@@ -148,6 +175,34 @@ const fetchCandidates = async () => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
+              Phone
+            </label>
+            <input
+              type="number"
+              value={formData.phone}
+              onChange={(e) => setFormData({...formData, phone: e.target.value})}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Birth Date
+            </label>
+            <input
+              type="date"
+              value={formData.birthdate}
+              onChange={(e) =>
+                setFormData({ ...formData, birthdate: e.target.value })
+              }
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
               Password
             </label>
             <input
@@ -179,6 +234,27 @@ const fetchCandidates = async () => {
       </div>
     </div>
   );
+
+
+  const handleFileUpload = async (e) => {
+      e.preventDefault();
+      setLoading(true);
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        await axios.post(`http://localhost:8080/api/examiner/register/candidates`, formData, {
+          headers: { Authorization: `Bearer ${getToken()}` }
+        });
+        setFile(null);
+        fetchCandidates();
+        setError('');
+      } catch (err) {
+        setError('Failed to upload candidates file');
+      } finally {
+        setLoading(false);
+      }
+    };
+
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -220,9 +296,20 @@ const fetchCandidates = async () => {
               Candidates
             </button>
             <button
-              onClick={() => setActiveTab('results')}
+              onClick={() => setActiveTab('Questions')}
               className={`w-full flex items-center px-4 py-2 text-sm font-medium rounded-md ${
-                activeTab === 'results'
+                activeTab === 'Questions'
+                  ? 'bg-blue-100 text-blue-700'
+                  : 'text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              <FileText className="h-4 w-4 mr-3" />
+              Questions
+            </button>
+            <button
+              onClick={() => setActiveTab('Results')}
+              className={`w-full flex items-center px-4 py-2 text-sm font-medium rounded-md ${
+                activeTab === 'Results'
                   ? 'bg-blue-100 text-blue-700'
                   : 'text-gray-600 hover:bg-gray-100'
               }`}
@@ -237,6 +324,7 @@ const fetchCandidates = async () => {
               <div className="p-6">
                 <div className="flex justify-between mb-6">
                   <div className="flex space-x-4">
+
                     <div className="relative">
                       <input
                         type="text"
@@ -255,6 +343,27 @@ const fetchCandidates = async () => {
                       Filters
                     </button>
                   </div>
+
+                    <label htmlFor="file-upload" className="flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">
+                        <UserPlus className="h-4 w-4 mr-2" />
+                        Upload Candidates
+                    </label>
+                    <input
+                       id="file-upload"
+                       type="file"
+                       onChange={(e) => setFile(e.target.files[0])}
+                       className="hidden"
+                    />
+                    {file && (
+                    <button
+                      onClick={handleFileUpload}
+                      disabled={loading}
+                      className="flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+                    >
+                    {loading ? 'Uploading...' : 'Upload'}
+                    </button>
+                    )}
+
                   <button
                     onClick={() => setShowRegisterModal(true)}
                     className="flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
@@ -268,15 +377,13 @@ const fetchCandidates = async () => {
                   <div className="mb-6 p-4 bg-gray-50 rounded-md">
                     <div className="flex items-center space-x-4">
                       <label className="text-sm font-medium text-gray-700">College:</label>
-                      <select
+                      <input
+                        type="text"
                         value={selectedCollege}
                         onChange={(e) => setSelectedCollege(e.target.value)}
+                        placeholder="Type college name"
                         className="mt-1 block w-48 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                      >
-                        <option value="all">All Colleges</option>
-                        <option value="MIT">BVM</option>
-                        <option value="Stanford">LD</option>
-                      </select>
+                      />
                     </div>
                   </div>
                 )}
@@ -286,10 +393,11 @@ const fetchCandidates = async () => {
                     <thead className="bg-gray-50">
                       <tr>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">College</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">College</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">phone</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">birthdate</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
@@ -300,7 +408,7 @@ const fetchCandidates = async () => {
                           </td>
                         </tr>
                       ) : filteredCandidates.map((candidate) => (
-                        <tr key={candidate.id}>
+                        <tr key={candidate.cid}>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                             {candidate.name}
                           </td>
@@ -311,15 +419,22 @@ const fetchCandidates = async () => {
                             {candidate.college}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {candidate.phone}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {candidate.birthdate}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             <div className="flex space-x-3">
-                              <button className="text-blue-600 hover:text-blue-900">
-                                <Eye className="h-4 w-4" />
-                              </button>
-                              <button className="text-green-600 hover:text-green-900">
+                              <button
+                                onClick={() => handleEdit(candidate)}
+                                className="text-green-600 hover:text-green-900"
+                              >
                                 <Edit className="h-4 w-4" />
                               </button>
+
                               <button
-                                onClick={() => handleDelete(candidate.id)}
+                                onClick={() => handleDelete(candidate.cid)}
                                 className="text-red-600 hover:text-red-900"
                               >
                                 <Trash2 className="h-4 w-4" />
@@ -334,14 +449,9 @@ const fetchCandidates = async () => {
               </div>
             )}
 
-            {activeTab === 'results' && (
-              <div className="p-6">
-                <h2 className="text-lg font-medium text-gray-900 mb-4">
-                  Examination Results
-                </h2>
-                {/* Results content here */}
-              </div>
-            )}
+             {activeTab === 'Results' && <Results />}
+             {activeTab === 'Questions' && <Questions />}
+
           </div>
         </div>
       </div>

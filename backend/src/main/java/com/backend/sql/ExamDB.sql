@@ -1,6 +1,6 @@
 USE [ExamDB]
 GO
-/****** Object:  Table [dbo].[candidate]    Script Date: 06-11-2024 15:28:45 ******/
+/****** Object:  Table [dbo].[candidate]    Script Date: 07-11-2024 22:27:18 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -19,7 +19,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[examiner]    Script Date: 06-11-2024 15:28:45 ******/
+/****** Object:  Table [dbo].[examiner]    Script Date: 07-11-2024 22:27:18 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -36,7 +36,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[mcq]    Script Date: 06-11-2024 15:28:45 ******/
+/****** Object:  Table [dbo].[mcq]    Script Date: 07-11-2024 22:27:18 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -66,6 +66,14 @@ INSERT [dbo].[candidate] ([c_id], [birthdate], [college], [email], [name], [pass
 GO
 INSERT [dbo].[candidate] ([c_id], [birthdate], [college], [email], [name], [password], [phone]) VALUES (13, CAST(N'2003-11-05' AS Date), N'LD', N'rahul@gmail.com', N'Rahul Patel', N'$2a$10$zkUeiP2zXvrVcsM0YH4XXeYv5/a2iqSnRMqLLRq4gjBbCgsDpwaAu', N'9797979797')
 GO
+INSERT [dbo].[candidate] ([c_id], [birthdate], [college], [email], [name], [password], [phone]) VALUES (16, CAST(N'2000-05-25' AS Date), N'College C', N'alicejohnson@example.com', N'Alice Johnson', N'$2a$10$Z.YR7CvtOsFvQjM.uWuqs.Czk19x38G7aRCrafjUv7r7hg0l4.S4G', N'1122334455')
+GO
+INSERT [dbo].[candidate] ([c_id], [birthdate], [college], [email], [name], [password], [phone]) VALUES (17, CAST(N'2003-11-10' AS Date), N'College A', N'johndoe@example.com', N'John Doe', N'$2a$10$MeNiAD8NG2Ug07gmTjeEpej/pbR2W.f.qt60434KMkcrQPCiAJcKS', N'1234567890')
+GO
+INSERT [dbo].[candidate] ([c_id], [birthdate], [college], [email], [name], [password], [phone]) VALUES (18, CAST(N'2000-05-25' AS Date), N'College B', N'janesmith@example.com', N'Jane Smith', N'$2a$10$w.0UUOKbfzHuEu4mEwQUuOvOiWXg46F90C8YxvYtO/db4w0pKQJLy', N'987654321')
+GO
+INSERT [dbo].[candidate] ([c_id], [birthdate], [college], [email], [name], [password], [phone]) VALUES (21, CAST(N'2003-11-05' AS Date), N'LD', N'rahul1@gmail.com', N'Rahul Patel', N'$2a$10$YIx4L5iBrpKcueo/ABUgdeIoecm5MVbD4XCuJNNQ.BkTMl.xl1rYS', N'9797979797')
+GO
 SET IDENTITY_INSERT [dbo].[candidate] OFF
 GO
 SET IDENTITY_INSERT [dbo].[examiner] ON 
@@ -77,6 +85,10 @@ GO
 SET IDENTITY_INSERT [dbo].[mcq] ON 
 GO
 INSERT [dbo].[mcq] ([id], [correct_answer], [difficulty_level], [optiona], [optionb], [optionc], [optiond], [question]) VALUES (1, N'D', N'Medium', N'Berlin', N'Madrid', N'Paris', N'Rome', N'What is the capital of Italy?')
+GO
+INSERT [dbo].[mcq] ([id], [correct_answer], [difficulty_level], [optiona], [optionb], [optionc], [optiond], [question]) VALUES (3, N'C', N'Easy', N'Berlin', N'Madrid', N'Paris', N'Rome', N'What is the capital of France?')
+GO
+INSERT [dbo].[mcq] ([id], [correct_answer], [difficulty_level], [optiona], [optionb], [optionc], [optiond], [question]) VALUES (5, N'C', N'Hard', N'Berlin', N'Paris', N'Rome', N'Madrid', N'What is the capital of Italy?')
 GO
 SET IDENTITY_INSERT [dbo].[mcq] OFF
 GO

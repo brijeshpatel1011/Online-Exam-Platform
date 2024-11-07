@@ -6,7 +6,6 @@ const HomePage = () => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <div className="container mx-auto px-4 py-16">
         <div className="max-w-4xl mx-auto text-center">
-          {/* Header Section */}
           <h1 className="text-4xl md:text-5xl font-bold text-gray-800 mb-6">
             Welcome to Online Examination Platform
           </h1>
@@ -14,10 +13,8 @@ const HomePage = () => {
             Your trusted platform for secure and efficient online assessments
           </p>
           
-          {/* Login Cards */}
           <div className="grid md:grid-cols-2 gap-8 mt-8">
-            {/* Admin Login Card */}
-            <Link 
+            <Link
               to="/admin-login"
               className="p-6 bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 group"
             >
@@ -33,8 +30,7 @@ const HomePage = () => {
               </span>
             </Link>
 
-            {/* Candidate Login Card */}
-            <Link 
+            <Link
               to="/candidate-login"
               className="p-6 bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 group"
             >

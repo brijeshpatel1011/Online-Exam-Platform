@@ -16,7 +16,7 @@ export const loginExaminer = async (data) => {
 };
 
 export const registerCandidate = async (data, token) => {
-  return axios.post('http://localhost:8080/api/examiner/register/candidate', data, {
+  return axios.post(`http://localhost:8080/api/examiner/register/candidate`, data, {
     headers: { Authorization: `Bearer ${token}` },
   });
 };

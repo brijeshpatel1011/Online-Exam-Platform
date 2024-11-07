@@ -23,7 +23,6 @@ function CandidateLogin() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full mx-auto space-y-8 bg-white p-8 rounded-xl shadow-lg">
-        {/* Header */}
         <div>
           <div className="mx-auto h-12 w-12 bg-green-100 rounded-full flex items-center justify-center">
             <svg className="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -38,7 +37,6 @@ function CandidateLogin() {
           </p>
         </div>
 
-        {/* Form */}
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           {error && (
             <div className="bg-red-50 text-red-500 p-3 rounded-md text-sm">
@@ -92,7 +90,6 @@ function CandidateLogin() {
           </div>
         </form>
 
-        {/* Footer Links */}
         <div className="text-sm text-center space-y-3">
           <Link to="/forgot-password" className="text-green-600 hover:text-green-500">
             Forgot your password?
