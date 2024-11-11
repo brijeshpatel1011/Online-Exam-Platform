@@ -17,6 +17,7 @@ const Questions = () => {
     optionC: '',
     optionD: '',
     correctAnswer: '',
+    category: '',
     difficultyLevel: '',
   });
 
@@ -48,6 +49,7 @@ const Questions = () => {
       optionC: '',
       optionD: '',
       correctAnswer: '',
+      category: '',
       difficultyLevel: '',
     });
     setShowQuestionModal(true);
@@ -62,7 +64,8 @@ const Questions = () => {
       optionC: question.optionC,
       optionD: question.optionD,
       correctAnswer: question.correctAnswer,
-      difficultyLevel: question.difficultyLevel,
+      category: question.category,
+      difficulty: question.difficulty
     });
     setShowQuestionModal(true);
   };
@@ -93,7 +96,8 @@ const Questions = () => {
         optionC: '',
         optionD: '',
         correctAnswer: '',
-        difficultyLevel: '',
+        category: '',
+        difficulty: '',
       });
       setEditQuestionId(null);
       setError('');
@@ -201,11 +205,21 @@ const Questions = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Difficulty Level</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
             <input
               type="text"
-              value={form1Data.difficultyLevel}
-              onChange={(e) => setform1Data({ ...form1Data, difficultyLevel: e.target.value })}
+              value={form1Data.category}
+              onChange={(e) => setform1Data({ ...form1Data, category: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+              required
+            />
+          </div>
+           <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Difficulty</label>
+            <input
+              type="text"
+              value={form1Data.difficulty}
+              onChange={(e) => setform1Data({ ...form1Data, difficulty: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
               required
             />
@@ -271,6 +285,7 @@ const Questions = () => {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Question</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Options</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Correct Answer</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Difficulty</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
             </tr>
@@ -294,7 +309,10 @@ const Questions = () => {
                   {question.correctAnswer}
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-500">
-                  {question.difficultyLevel}
+                  {question.category}
+                </td>
+                <td className="px-6 py-4 text-sm text-gray-500">
+                  {question.difficulty}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <button

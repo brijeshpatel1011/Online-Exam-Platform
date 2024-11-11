@@ -35,6 +35,11 @@ public class MCQ {
     private String correctAnswer;
 
     @Column(nullable = false)
-    private String difficultyLevel;
+    private String category;
 
+    @Column(nullable = false)
+    private String difficulty;
+
+    @Column(nullable = false)
+    private Integer marks;
 }

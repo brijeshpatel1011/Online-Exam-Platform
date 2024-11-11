@@ -35,7 +35,9 @@ public class MCQService {
         existingMCQ.setOptionC(mcqDetails.getOptionC());
         existingMCQ.setOptionD(mcqDetails.getOptionD());
         existingMCQ.setCorrectAnswer(mcqDetails.getCorrectAnswer());
-        existingMCQ.setDifficultyLevel(mcqDetails.getDifficultyLevel());
+        existingMCQ.setCategory(mcqDetails.getCategory());
+        existingMCQ.setDifficulty(mcqDetails.getDifficulty());
+        existingMCQ.setMarks(mcqDetails.getMarks());
 
         return mcqRepository.save(existingMCQ);
     }
