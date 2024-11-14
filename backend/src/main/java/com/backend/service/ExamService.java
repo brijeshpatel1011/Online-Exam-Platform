@@ -3,6 +3,7 @@ package com.backend.service;
 import com.backend.model.*;
 import com.backend.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -43,9 +44,53 @@ public class ExamService {
             candidateExam.setCandidate(candidateOpt.get());
             candidateExam.setExam(examOpt.get());
             candidateExam.setStatus("in-progress");
-            candidateExam.setStartedAt(LocalDateTime.now());  // Updated to LocalDateTime
+            candidateExam.setStartedAt(LocalDateTime.now());
             return candidateExamRepository.save(candidateExam);
         }
         throw new RuntimeException("Invalid candidate or exam ID");
     }
+
+    public CandidateMCQAnswers submitMcqAnswer(Long candidateExamId, Long mcqId, String selectedOption) {
+        CandidateExam candidateExam = candidateExamRepository.findById(candidateExamId)
+                .orElseThrow(() -> new RuntimeException("Candidate exam not found"));
+        MCQ mcq = mcqRepository.findById(mcqId)
+                .orElseThrow(() -> new RuntimeException("MCQ not found"));
+
+        CandidateMCQAnswers answer = new CandidateMCQAnswers();
+        answer.setCandidateExam(candidateExam);
+        answer.setMcq(mcq);
+        answer.setSelectedOption(selectedOption);
+        answer.setSubmittedAt(LocalDateTime.now());
+        return candidateMcqAnswerRepository.save(answer);
+    }
+
+    public int calculateExamScore(Long candidateExamId) {
+        List<CandidateMCQAnswers> answers = candidateMcqAnswerRepository.findByCandidateExam_CandidateExamId(candidateExamId);
+        int score = 0;
+
+        for (CandidateMCQAnswers answer : answers) {
+            if (answer.getSelectedOption().equals(answer.getMcq().getCorrectAnswer())) {
+                score += answer.getMcq().getMarks();
+            }
+        }
+
+        CandidateExam candidateExam = candidateExamRepository.findById(candidateExamId)
+                .orElseThrow(() -> new RuntimeException("Candidate exam not found"));
+        candidateExam.setScore(score);
+        candidateExam.setStatus("completed");
+        candidateExamRepository.save(candidateExam);
+
+        return score;
+    }
+
+    public CandidateExam getCandidateExamResult(Long candidateExamId) {
+        return candidateExamRepository.findById(candidateExamId)
+                .orElseThrow(() -> new RuntimeException("Candidate exam not found"));
+    }
+
+
+    public Optional<CandidateExam> getExamStatusByExamId(Long examId) {
+        return candidateExamRepository.findByExam_ExamId(examId);
+    }
+
 }
