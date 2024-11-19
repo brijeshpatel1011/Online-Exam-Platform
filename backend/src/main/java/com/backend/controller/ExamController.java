@@ -1,65 +1,79 @@
 package com.backend.controller;
 
-import com.backend.model.*;
+import com.backend.model.Exam;
 import com.backend.service.ExamService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
 @RestController
-@CrossOrigin(origins = "http://localhost:3000")
 @RequestMapping("/api/exams")
 public class ExamController {
 
     @Autowired
     private ExamService examService;
 
-    @PostMapping("/create")
-    public Exam createExam(@RequestBody Exam exam) {
-        return examService.createExam(exam);
-    }
-
+    // Fetch all exams
     @GetMapping
-    public List<Exam> getAllExams() {
-        return examService.getAllExams();
+    public ResponseEntity<List<Exam>> getAllExams() {
+        List<Exam> exams = examService.getAllExams();
+        return ResponseEntity.ok(exams);
     }
 
-    @PostMapping("/{examId}/start/{candidateId}")
-    public CandidateExam startExam(@PathVariable Long candidateId, @PathVariable Long examId) {
-        return examService.startExam(candidateId, examId);
+    // Fetch an exam by ID
+    @GetMapping("/{id}")
+    public ResponseEntity<Exam> getExamById(@PathVariable int id) {
+        Optional<Exam> exam = examService.getExamById(id);
+        return exam.map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
-    @PostMapping("/{candidateExamId}/submit-mcq")
-    public CandidateMCQAnswers submitMcqAnswer(
-            @PathVariable Long candidateExamId,
-            @RequestParam Long mcqId,
-            @RequestParam String selectedOption) {
-        return examService.submitMcqAnswer(candidateExamId, mcqId, selectedOption);
+    // Create an exam
+    @PostMapping
+    public ResponseEntity<Exam> saveOrUpdateExam(@RequestBody Exam exam) {
+        Exam savedExam = examService.saveOrUpdateExam(exam);
+        return ResponseEntity.ok(savedExam);
     }
 
-    @GetMapping("/{candidateExamId}/result")
-    public int getExamScore(@PathVariable Long candidateExamId) {
-        return examService.calculateExamScore(candidateExamId);
-    }
-
-    @GetMapping("/{candidateExamId}/detailed-result")
-    public CandidateExam getCandidateExamResult(@PathVariable Long candidateExamId) {
-        return examService.getCandidateExamResult(candidateExamId);
-    }
-
-    @GetMapping("/status/{examId}")
-    public ResponseEntity<Object> getExamStatus(@PathVariable("examId") Long examId) {
-        Optional<CandidateExam> examStatus = examService.getExamStatusByExamId(examId);
-
-        if (examStatus.isPresent()) {
-            return ResponseEntity.ok(examStatus.get().getStatus());
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Exam not found");
+    // Update an existing exam
+    @PutMapping("/{id}")
+    public ResponseEntity<Exam> updateExam(@PathVariable int id, @RequestBody Exam examDetails) {
+        try {
+            Exam updatedExam = examService.updateExam(id, examDetails);
+            return ResponseEntity.ok(updatedExam);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(null);
         }
     }
 
+    // Delete an exam by ID
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deleteExamById(@PathVariable int id) {
+        try {
+            examService.deleteExamById(id);
+            return ResponseEntity.ok("Exam deleted successfully.");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
 
+    // Fetch exams by college
+    @GetMapping("/college/{college}")
+    public ResponseEntity<List<Exam>> getExamsByCollege(@PathVariable String college) {
+        List<Exam> exams = examService.getExamsByCollege(college);
+        return ResponseEntity.ok(exams);
+    }
+
+    // Fetch exams by start date range
+    @GetMapping("/date-range")
+    public ResponseEntity<List<Exam>> getExamsByDateRange(
+            @RequestParam LocalDate startDate,
+            @RequestParam LocalDate endDate) {
+        List<Exam> exams = examService.getExamsByDateRange(startDate, endDate);
+        return ResponseEntity.ok(exams);
+    }
 }

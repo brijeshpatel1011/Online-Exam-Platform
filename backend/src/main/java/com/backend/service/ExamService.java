@@ -1,96 +1,72 @@
 package com.backend.service;
 
-import com.backend.model.*;
-import com.backend.repository.*;
+import com.backend.model.Exam;
+import com.backend.repository.ExamRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
 @Service
 public class ExamService {
+
     @Autowired
     private ExamRepository examRepository;
 
-    @Autowired
-    private CandidateExamRepository candidateExamRepository;
-
-    @Autowired
-    private MCQRepository mcqRepository;
-
-    @Autowired
-    private CandidateMCQAnswersRepository candidateMcqAnswerRepository;
-
-    @Autowired
-    private CandidateRepository candidateRepository;
-
-    public Exam createExam(Exam exam) {
-        return examRepository.save(exam);
-    }
-
+    // Fetch all exams
     public List<Exam> getAllExams() {
         return examRepository.findAll();
     }
 
-    public CandidateExam startExam(Long candidateId, Long examId) {
-        Optional<Candidate> candidateOpt = candidateRepository.findById(candidateId);
-        Optional<Exam> examOpt = examRepository.findById(examId);
+    // Fetch an exam by ID
+    public Optional<Exam> getExamById(int examId) {
+        return examRepository.findById(examId);
+    }
 
-        if (candidateOpt.isPresent() && examOpt.isPresent()) {
-            CandidateExam candidateExam = new CandidateExam();
-            candidateExam.setCandidate(candidateOpt.get());
-            candidateExam.setExam(examOpt.get());
-            candidateExam.setStatus("in-progress");
-            candidateExam.setStartedAt(LocalDateTime.now());
-            return candidateExamRepository.save(candidateExam);
+    // Create an exam
+    public Exam saveOrUpdateExam(Exam exam) {
+        return examRepository.save(exam);
+    }
+
+    // Update an existing exam
+    public Exam updateExam(int examId, Exam examDetails) {
+        Exam existingExam = examRepository.findById(examId)
+                .orElseThrow(() -> new IllegalArgumentException("Exam with ID " + examId + " does not exist."));
+
+        existingExam.setTitle(examDetails.getTitle());
+        existingExam.setDescription(examDetails.getDescription());
+        existingExam.setTotalQuestions(examDetails.getTotalQuestions());
+        existingExam.setPassingScore(examDetails.getPassingScore());
+        existingExam.setCollege(examDetails.getCollege());
+        existingExam.setDuration(examDetails.getDuration());
+        existingExam.setExamStartDate(examDetails.getExamStartDate());
+        existingExam.setExamStartTime(examDetails.getExamStartTime());
+        existingExam.setExamEndDate(examDetails.getExamEndDate());
+        existingExam.setExamEndTime(examDetails.getExamEndTime());
+        existingExam.setTotalMarks(examDetails.getTotalMarks());
+
+        return examRepository.save(existingExam);
+    }
+
+    // Delete an exam by ID
+    public void deleteExamById(int examId) {
+        if (examRepository.existsById(examId)) {
+            examRepository.deleteById(examId);
+        } else {
+            throw new IllegalArgumentException("Exam with ID " + examId + " does not exist.");
         }
-        throw new RuntimeException("Invalid candidate or exam ID");
     }
 
-    public CandidateMCQAnswers submitMcqAnswer(Long candidateExamId, Long mcqId, String selectedOption) {
-        CandidateExam candidateExam = candidateExamRepository.findById(candidateExamId)
-                .orElseThrow(() -> new RuntimeException("Candidate exam not found"));
-        MCQ mcq = mcqRepository.findById(mcqId)
-                .orElseThrow(() -> new RuntimeException("MCQ not found"));
-
-        CandidateMCQAnswers answer = new CandidateMCQAnswers();
-        answer.setCandidateExam(candidateExam);
-        answer.setMcq(mcq);
-        answer.setSelectedOption(selectedOption);
-        answer.setSubmittedAt(LocalDateTime.now());
-        return candidateMcqAnswerRepository.save(answer);
+    // Fetch exams by college
+    public List<Exam> getExamsByCollege(String college) {
+        return examRepository.findByCollege(college);
     }
 
-    public int calculateExamScore(Long candidateExamId) {
-        List<CandidateMCQAnswers> answers = candidateMcqAnswerRepository.findByCandidateExam_CandidateExamId(candidateExamId);
-        int score = 0;
-
-        for (CandidateMCQAnswers answer : answers) {
-            if (answer.getSelectedOption().equals(answer.getMcq().getCorrectAnswer())) {
-                score += answer.getMcq().getMarks();
-            }
-        }
-
-        CandidateExam candidateExam = candidateExamRepository.findById(candidateExamId)
-                .orElseThrow(() -> new RuntimeException("Candidate exam not found"));
-        candidateExam.setScore(score);
-        candidateExam.setStatus("completed");
-        candidateExamRepository.save(candidateExam);
-
-        return score;
+    // Fetch exams by start date range
+    public List<Exam> getExamsByDateRange(LocalDate startDate, LocalDate endDate) {
+        return examRepository.findByExamStartDateBetween(startDate, endDate);
     }
-
-    public CandidateExam getCandidateExamResult(Long candidateExamId) {
-        return candidateExamRepository.findById(candidateExamId)
-                .orElseThrow(() -> new RuntimeException("Candidate exam not found"));
-    }
-
-
-    public Optional<CandidateExam> getExamStatusByExamId(Long examId) {
-        return candidateExamRepository.findByExam_ExamId(examId);
-    }
-
 }
+

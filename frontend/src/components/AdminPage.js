@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Search, UserPlus, Users, FileText, LogOut, Filter, Trash2, Edit } from 'lucide-react';
 import { getToken, logout } from '../services/authService';
-//import Exam from '../components/Exam';
+import Exam from '../components/Exam';
 import Questions from '../components/Questions';
 
 const AdminPage = () => {
@@ -306,6 +306,17 @@ const handleEdit = (candidate) => {
               <FileText className="h-4 w-4 mr-3" />
               Questions
             </button>
+            <button
+              onClick={() => setActiveTab('Exams')}
+              className={`w-full flex items-center px-4 py-2 text-sm font-medium rounded-md ${
+                activeTab === 'Exams'
+                  ? 'bg-blue-100 text-blue-700'
+                  : 'text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              <FileText className="h-4 w-4 mr-3" />
+              Exams
+            </button>
 
           </div>
 
@@ -440,6 +451,7 @@ const handleEdit = (candidate) => {
             )}
 
              {activeTab === 'Questions' && <Questions />}
+             {activeTab === 'Exams' && <Exam />}
 
           </div>
         </div>
