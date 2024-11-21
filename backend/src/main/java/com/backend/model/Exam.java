@@ -7,6 +7,8 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Data
@@ -53,5 +55,14 @@ public class Exam {
     @Column(name = "total_marks")
     private Integer totalMarks;
 
+    // Relation to MCQs
+    @ManyToMany
+    @JoinTable(
+            name = "exam_mcq",
+            joinColumns = @JoinColumn(name = "exam_id"),
+            inverseJoinColumns = @JoinColumn(name = "mcq_id")
+    )
+    private List<MCQ> mcqs = new ArrayList<>();
 }
+
 

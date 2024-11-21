@@ -1,7 +1,9 @@
 package com.backend.service;
 
 import com.backend.model.Exam;
+import com.backend.model.MCQ;
 import com.backend.repository.ExamRepository;
+import com.backend.repository.MCQRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +17,9 @@ public class ExamService {
     @Autowired
     private ExamRepository examRepository;
 
+    @Autowired
+    private MCQRepository mcqRepository;
+
     // Fetch all exams
     public List<Exam> getAllExams() {
         return examRepository.findAll();
@@ -26,9 +31,17 @@ public class ExamService {
     }
 
     // Create an exam
-    public Exam saveOrUpdateExam(Exam exam) {
+    public Exam createExam(Exam exam) {
+
+        List<MCQ> selectedQuestions = mcqRepository.findRandomQuestions(exam.getTotalQuestions());
+        exam.setMcqs(selectedQuestions);
+
+        int totalMarks = selectedQuestions.stream().mapToInt(MCQ::getMarks).sum();
+        exam.setTotalMarks(totalMarks);
+
         return examRepository.save(exam);
     }
+
 
     // Update an existing exam
     public Exam updateExam(int examId, Exam examDetails) {

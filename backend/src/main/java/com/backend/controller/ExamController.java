@@ -34,8 +34,8 @@ public class ExamController {
 
     // Create an exam
     @PostMapping
-    public ResponseEntity<Exam> saveOrUpdateExam(@RequestBody Exam exam) {
-        Exam savedExam = examService.saveOrUpdateExam(exam);
+    public ResponseEntity<Exam> createExam(@RequestBody Exam exam) {
+        Exam savedExam = examService.createExam(exam);
         return ResponseEntity.ok(savedExam);
     }
 
