@@ -2,7 +2,9 @@ package com.backend.service;
 
 import com.backend.model.Exam;
 import com.backend.model.MCQ;
+import com.backend.model.ProgrammingQuestion;
 import com.backend.repository.ExamRepository;
+import com.backend.repository.ProgrammingQuestionRepository;
 import com.backend.repository.MCQRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -20,6 +22,10 @@ public class ExamService {
     @Autowired
     private MCQRepository mcqRepository;
 
+    @Autowired
+    private ProgrammingQuestionRepository programmingQuestionRepository;
+
+
     // Fetch all exams
     public List<Exam> getAllExams() {
         return examRepository.findAll();
@@ -32,13 +38,32 @@ public class ExamService {
 
     // Create an exam
     public Exam createExam(Exam exam) {
+        // Define the number of programming questions
+        int programmingQuestionsCount = 3;
 
-        List<MCQ> selectedQuestions = mcqRepository.findRandomQuestions(exam.getTotalQuestions());
-        exam.setMcqs(selectedQuestions);
+        // Ensure totalQuestions is sufficient for both types
+        if (exam.getTotalQuestions() < programmingQuestionsCount) {
+            throw new IllegalArgumentException("Total questions must be at least " + programmingQuestionsCount);
+        }
 
-        int totalMarks = selectedQuestions.stream().mapToInt(MCQ::getMarks).sum();
+        // Fetch random programming questions
+        List<ProgrammingQuestion> selectedProgrammingQuestions =
+                programmingQuestionRepository.findRandomProgrammingQuestions(programmingQuestionsCount);
+
+        // Fetch random MCQ questions
+        int mcqQuestionsCount = exam.getTotalQuestions() - programmingQuestionsCount;
+        List<MCQ> selectedMCQs = mcqRepository.findRandomQuestions(mcqQuestionsCount);
+
+        // Attach questions to the exam
+        exam.setProgrammingQuestions(selectedProgrammingQuestions);
+        exam.setMcqs(selectedMCQs);
+
+        // Calculate total marks
+        int totalMarks = selectedMCQs.stream().mapToInt(MCQ::getMarks).sum() +
+                selectedProgrammingQuestions.stream().mapToInt(ProgrammingQuestion::getMarks).sum();
         exam.setTotalMarks(totalMarks);
 
+        // Save the exam
         return examRepository.save(exam);
     }
 

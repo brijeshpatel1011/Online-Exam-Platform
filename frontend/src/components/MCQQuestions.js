@@ -265,17 +265,17 @@ const Questions = () => {
   );
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-lg font-medium text-gray-900">Questions</h2>
-        <button
-          onClick={handleAdd}
-          className="flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
-        >
-          <FileText className="h-4 w-4 mr-2" />
-          Add Question
-        </button>
-      </div>
+    <div>
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-lg font-medium text-gray-900">MCQ Questions</h2>
+          <button
+            onClick={handleAdd}
+            className="flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+          >
+            <FileText className="h-4 w-4 mr-2" />
+            Add MCQ Question
+          </button>
+        </div>
 
       {error && (
         <div className="bg-red-50 text-red-900 p-4 mb-4">{error}</div>

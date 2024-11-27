@@ -9,6 +9,6 @@ import java.util.List;
 
 @Repository
 public interface ExamRepository extends JpaRepository<Exam, Integer> {
-    List<Exam> findByCollege(String college);
+    List<Exam> findByCollege(String college);       // Find exams by college
     List<Exam> findByExamStartDateBetween(LocalDate startDate, LocalDate endDate);
 }

@@ -55,7 +55,6 @@ public class Exam {
     @Column(name = "total_marks")
     private Integer totalMarks;
 
-    // Relation to MCQs
     @ManyToMany
     @JoinTable(
             name = "exam_mcq",
@@ -63,6 +62,14 @@ public class Exam {
             inverseJoinColumns = @JoinColumn(name = "mcq_id")
     )
     private List<MCQ> mcqs = new ArrayList<>();
+
+    @ManyToMany
+    @JoinTable(
+            name = "exam_programming_question",
+            joinColumns = @JoinColumn(name = "exam_id"),
+            inverseJoinColumns = @JoinColumn(name = "programming_question_id")
+    )
+    private List<ProgrammingQuestion> programmingQuestions;
 }
 
 

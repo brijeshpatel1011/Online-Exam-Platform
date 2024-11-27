@@ -4,7 +4,7 @@ import axios from 'axios';
 import { Search, UserPlus, Users, FileText, LogOut, Filter, Trash2, Edit } from 'lucide-react';
 import { getToken, logout } from '../services/authService';
 import Exam from '../components/Exam';
-import Questions from '../components/Questions';
+import CombinedQuestions from '../components/CombinedQuestions';
 
 const AdminPage = () => {
   const navigate = useNavigate();
@@ -450,7 +450,7 @@ const handleEdit = (candidate) => {
               </div>
             )}
 
-             {activeTab === 'Questions' && <Questions />}
+             {activeTab === 'Questions' && <CombinedQuestions />}
              {activeTab === 'Exams' && <Exam />}
 
           </div>
