@@ -47,15 +47,20 @@ public class AuthService {
     }
 
     public String authenticateExaminer(LoginRequest loginRequest) {
+        var examiner = examinerRepository.findByEmail(loginRequest.getEmail())
+                .orElseThrow(() -> new IllegalArgumentException("Invalid credentials"));
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
-        return jwtTokenProvider.generateToken(loginRequest.getEmail());
+        return jwtTokenProvider.generateToken(loginRequest.getEmail(), examiner.getEId());
     }
 
     public String authenticateCandidate(LoginRequest loginRequest) {
+        var candidate = candidateRepository.findByEmail(loginRequest.getEmail())
+                .orElseThrow(() -> new IllegalArgumentException("Invalid credentials"));
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
-        return jwtTokenProvider.generateToken(loginRequest.getEmail());
+        return jwtTokenProvider.generateToken(loginRequest.getEmail(), candidate.getCId());
     }
+
 }
 

@@ -10,7 +10,8 @@ export const loginExaminer = async (data) => {
   const response = await axios.post(`${API_URL}/login/examiner`, data);
   if (response.data.token) {
     localStorage.setItem('token', response.data.token);
-    localStorage.setItem('role', 'examiner');
+    localStorage.setItem('role', 'examiner'); // Store role
+    localStorage.setItem('examinerId', response.data.id); // Store examiner ID
   }
   return response.data;
 };
@@ -26,6 +27,7 @@ export const loginCandidate = async (data) => {
   if (response.data.token) {
     localStorage.setItem('token', response.data.token);
     localStorage.setItem('role', 'candidate');
+    localStorage.setItem('candidateId', response.data.id);
   }
   return response.data;
 };
@@ -33,7 +35,11 @@ export const loginCandidate = async (data) => {
 export const logout = () => {
   localStorage.removeItem('token');
   localStorage.removeItem('role');
+  localStorage.removeItem('examinerId');
+  localStorage.removeItem('candidateId');
 };
 
 export const getToken = () => localStorage.getItem('token');
 export const getRole = () => localStorage.getItem('role');
+export const getExaminerId = () => localStorage.getItem('examinerId');
+export const getCandidateId = () => localStorage.getItem('candidateId');

@@ -38,7 +38,7 @@ public class Exam {
     private String college;
 
     @Column(name = "duration", nullable = false)
-    private int duration; // in minutes
+    private int duration;
 
     @Column(name = "exam_start_date")
     private LocalDate examStartDate;

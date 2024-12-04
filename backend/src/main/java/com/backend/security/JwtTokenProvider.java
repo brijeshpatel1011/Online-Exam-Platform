@@ -18,13 +18,22 @@ public class JwtTokenProvider {
         this.jwtExpirationMs = jwtExpirationMs;
     }
 
-    public String generateToken(String email) {
+    public String generateToken(String email, Long id) {
         return Jwts.builder()
                 .setSubject(email)
+                .claim("id", id)  // Add ID to the token
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(new Date().getTime() + jwtExpirationMs))
                 .signWith(SignatureAlgorithm.HS512, jwtSecret)
                 .compact();
+    }
+
+    public Long getIdFromJwt(String token) {
+        Claims claims = Jwts.parser()
+                .setSigningKey(jwtSecret)
+                .parseClaimsJws(token)
+                .getBody();
+        return claims.get("id", Long.class);
     }
 
     public String getEmailFromJwt(String token) {

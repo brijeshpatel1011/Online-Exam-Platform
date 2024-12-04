@@ -7,6 +7,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
+
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
@@ -44,6 +46,17 @@ public class ExaminerController {
     public ResponseEntity<?> updateCandidate(@PathVariable Long id, @RequestBody Candidate updatedCandidate) {
         Candidate candidate = examinerService.updateCandidate(id, updatedCandidate);
         return ResponseEntity.ok(candidate);
+    }
+
+    @PostMapping("/candidate/{id}")
+    public ResponseEntity<?> getCandidateById(@PathVariable Long id) {
+        Optional<Candidate> candidate = examinerService.getCandidateById(id);
+
+        if (candidate.isPresent()) {
+            return ResponseEntity.ok(candidate.get());
+        } else {
+            return ResponseEntity.status(404).body("Candidate not found with ID: " + id);
+        }
     }
 
     @GetMapping("/candidates")

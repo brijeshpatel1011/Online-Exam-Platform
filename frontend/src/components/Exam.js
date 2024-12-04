@@ -452,4 +452,4 @@ const Exams = () => {
             );
           };
 
-          export default Exams;
+export default Exams;

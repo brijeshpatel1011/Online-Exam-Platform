@@ -9,6 +9,8 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
+
 import org.springframework.web.multipart.MultipartFile;
 
 
@@ -56,6 +58,10 @@ public class ExaminerService {
 
     public List<Candidate> getCandidatesByCollege(String college) {
         return candidateRepository.findByCollege(college);
+    }
+
+    public Optional<Candidate> getCandidateById(Long id) {
+        return candidateRepository.findById(id);
     }
 
     public void registerCandidatesFromFile(MultipartFile file) throws IOException {

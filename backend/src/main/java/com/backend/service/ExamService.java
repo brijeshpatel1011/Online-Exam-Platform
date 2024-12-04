@@ -38,32 +38,25 @@ public class ExamService {
 
     // Create an exam
     public Exam createExam(Exam exam) {
-        // Define the number of programming questions
         int programmingQuestionsCount = 3;
 
-        // Ensure totalQuestions is sufficient for both types
         if (exam.getTotalQuestions() < programmingQuestionsCount) {
             throw new IllegalArgumentException("Total questions must be at least " + programmingQuestionsCount);
         }
 
-        // Fetch random programming questions
         List<ProgrammingQuestion> selectedProgrammingQuestions =
                 programmingQuestionRepository.findRandomProgrammingQuestions(programmingQuestionsCount);
 
-        // Fetch random MCQ questions
         int mcqQuestionsCount = exam.getTotalQuestions() - programmingQuestionsCount;
         List<MCQ> selectedMCQs = mcqRepository.findRandomQuestions(mcqQuestionsCount);
 
-        // Attach questions to the exam
         exam.setProgrammingQuestions(selectedProgrammingQuestions);
         exam.setMcqs(selectedMCQs);
 
-        // Calculate total marks
         int totalMarks = selectedMCQs.stream().mapToInt(MCQ::getMarks).sum() +
                 selectedProgrammingQuestions.stream().mapToInt(ProgrammingQuestion::getMarks).sum();
         exam.setTotalMarks(totalMarks);
 
-        // Save the exam
         return examRepository.save(exam);
     }
 
