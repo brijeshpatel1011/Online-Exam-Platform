@@ -23,7 +23,6 @@ const CandidatePage = () => {
     fetchExams();
   }, [candidateId, navigate]);
 
-  // Disable copy-paste and related actions
   useEffect(() => {
     const handleCopyPaste = (e) => e.preventDefault();
     const handleContextMenu = (e) => e.preventDefault();
@@ -102,14 +101,12 @@ const CandidatePage = () => {
       if (!response.ok) throw new Error('Failed to fetch exam details');
       const examData = await response.json();
 
-      // Transform MCQ questions to match the expected format
       const transformedMcqs = examData.mcqs.map(mcq => ({
         id: mcq.id,
         question: mcq.question,
         options: [mcq.optionA, mcq.optionB, mcq.optionC, mcq.optionD]
       }));
 
-      // Transform programming questions
       const transformedProgrammingQuestions = examData.programmingQuestions.map(q => ({
         id: q.id,
         question: `${q.title}\n\n${q.description}\n\nInput Format: ${q.inputFormat}\nOutput Format: ${q.outputFormat}\nConstraints: ${q.constraints}\n\nSample Input: ${q.sampleInput}\nSample Output: ${q.sampleOutput}`
@@ -192,7 +189,6 @@ const CandidatePage = () => {
     if (!currentQuestion) return null;
 
     if ('options' in currentQuestion) {
-      // MCQ Question
       return (
         <div className="space-y-4">
           <h3 className="text-lg font-semibold">Question {currentQuestionIndex + 1}</h3>
@@ -216,7 +212,6 @@ const CandidatePage = () => {
         </div>
       );
     } else {
-      // Programming Question
       return (
         <div className="space-y-4">
           <h3 className="text-lg font-semibold">Programming Question {currentQuestionIndex + 1}</h3>
