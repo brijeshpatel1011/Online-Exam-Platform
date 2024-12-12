@@ -23,6 +23,37 @@ const CandidatePage = () => {
     fetchExams();
   }, [candidateId, navigate]);
 
+  // Disable copy-paste and related actions
+  useEffect(() => {
+    const handleCopyPaste = (e) => e.preventDefault();
+    const handleContextMenu = (e) => e.preventDefault();
+    const handleDragStart = (e) => e.preventDefault();
+    const handleKeyDown = (e) => {
+      if (
+        (e.ctrlKey || e.metaKey) &&
+        ['c', 'v', 'x', 'a'].includes(e.key.toLowerCase())
+      ) {
+        e.preventDefault();
+      }
+    };
+
+    document.addEventListener('copy', handleCopyPaste);
+    document.addEventListener('cut', handleCopyPaste);
+    document.addEventListener('paste', handleCopyPaste);
+    document.addEventListener('contextmenu', handleContextMenu);
+    document.addEventListener('dragstart', handleDragStart);
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('copy', handleCopyPaste);
+      document.removeEventListener('cut', handleCopyPaste);
+      document.removeEventListener('paste', handleCopyPaste);
+      document.removeEventListener('contextmenu', handleContextMenu);
+      document.removeEventListener('dragstart', handleDragStart);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
   const fetchExams = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -44,9 +75,11 @@ const CandidatePage = () => {
       const currentDate = new Date();
 
       const scheduledExams = data.filter(exam => {
-        const examDateTime = new Date(`${exam.examStartDate}T${exam.examStartTime}`);
-        return examDateTime > currentDate;
+        const examStart = new Date(`${exam.examStartDate}T${exam.examStartTime}`);
+        const examEnd = new Date(`${exam.examEndDate}T${exam.examEndTime}`);
+        return examStart <= currentDate && examEnd >= currentDate;
       });
+
 
       setExams(scheduledExams);
     } catch (error) {
@@ -69,8 +102,25 @@ const CandidatePage = () => {
       if (!response.ok) throw new Error('Failed to fetch exam details');
       const examData = await response.json();
 
-      console.log('Fetched Exam Data:', examData);
-      setSelectedExam(examData);
+      // Transform MCQ questions to match the expected format
+      const transformedMcqs = examData.mcqs.map(mcq => ({
+        id: mcq.id,
+        question: mcq.question,
+        options: [mcq.optionA, mcq.optionB, mcq.optionC, mcq.optionD]
+      }));
+
+      // Transform programming questions
+      const transformedProgrammingQuestions = examData.programmingQuestions.map(q => ({
+        id: q.id,
+        question: `${q.title}\n\n${q.description}\n\nInput Format: ${q.inputFormat}\nOutput Format: ${q.outputFormat}\nConstraints: ${q.constraints}\n\nSample Input: ${q.sampleInput}\nSample Output: ${q.sampleOutput}`
+      }));
+
+      setSelectedExam({
+        ...examData,
+        mcqs: transformedMcqs,
+        programmingQuestions: transformedProgrammingQuestions
+      });
+
       setExamStarted(false);
       setCurrentQuestionIndex(0);
       setAnswers({});
@@ -80,8 +130,9 @@ const CandidatePage = () => {
     }
   };
 
-
   const startExam = () => {
+    if (!selectedExam) return;
+
     const examDateTime = new Date(`${selectedExam.examStartDate}T${selectedExam.examStartTime}`);
     const currentDate = new Date();
 
@@ -96,6 +147,8 @@ const CandidatePage = () => {
   };
 
   const handleNextQuestion = () => {
+    if (!selectedExam) return;
+
     const allQuestions = [...selectedExam.mcqs, ...selectedExam.programmingQuestions];
     if (currentQuestionIndex < allQuestions.length - 1) {
       setCurrentQuestionIndex(prev => prev + 1);
@@ -104,6 +157,8 @@ const CandidatePage = () => {
   };
 
   const handlePreviousQuestion = () => {
+    if (!selectedExam) return;
+
     const allQuestions = [...selectedExam.mcqs, ...selectedExam.programmingQuestions];
     if (currentQuestionIndex > 0) {
       setCurrentQuestionIndex(prev => prev - 1);
@@ -112,14 +167,20 @@ const CandidatePage = () => {
   };
 
   const handleAnswerSubmit = (answer) => {
-    setAnswers({
-      ...answers,
+    if (!currentQuestion) return;
+
+    setAnswers(prev => ({
+      ...prev,
       [currentQuestion.id]: answer
-    });
+    }));
   };
 
   const formatDateTime = (date, time) => {
-    return new Date(`${date}T${time}`).toLocaleString();
+    try {
+      return new Date(`${date}T${time}`).toLocaleString();
+    } catch (error) {
+      return 'Invalid Date';
+    }
   };
 
   const handleLogout = () => {
@@ -131,10 +192,11 @@ const CandidatePage = () => {
     if (!currentQuestion) return null;
 
     if ('options' in currentQuestion) {
+      // MCQ Question
       return (
         <div className="space-y-4">
           <h3 className="text-lg font-semibold">Question {currentQuestionIndex + 1}</h3>
-          <p>{currentQuestion.question}</p>
+          <p className="whitespace-pre-wrap">{currentQuestion.question}</p>
           <div className="space-y-2">
             {currentQuestion.options.map((option, index) => (
               <div key={index} className="flex items-center space-x-2">
@@ -154,10 +216,11 @@ const CandidatePage = () => {
         </div>
       );
     } else {
+      // Programming Question
       return (
         <div className="space-y-4">
           <h3 className="text-lg font-semibold">Programming Question {currentQuestionIndex + 1}</h3>
-          <p>{currentQuestion.question}</p>
+          <p className="whitespace-pre-wrap">{currentQuestion.question}</p>
           <textarea
             value={answers[currentQuestion.id] || ''}
             onChange={(e) => handleAnswerSubmit(e.target.value)}
@@ -191,19 +254,25 @@ const CandidatePage = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {exams.map((exam) => (
                 <div
-                  key={exam.id}
+                  key={exam.examId}
                   className="p-4 border rounded-lg shadow hover:shadow-lg transition-shadow cursor-pointer bg-white"
                   onClick={() => handleExamSelect(exam.examId)}
                 >
                   <h2 className="text-xl font-semibold mb-2">{exam.title}</h2>
                   <p className="text-gray-600">Start: {formatDateTime(exam.examStartDate, exam.examStartTime)}</p>
                   <p className="text-gray-600">End: {formatDateTime(exam.examEndDate, exam.examEndTime)}</p>
+                  <p className="text-gray-600">Duration: {exam.duration} minutes</p>
+                  <p className="text-gray-600">Total Questions: {exam.totalQuestions}</p>
                 </div>
               ))}
             </div>
           ) : (
             <div className="border rounded-lg p-6 bg-white shadow">
               <h2 className="text-xl font-semibold mb-4">{selectedExam.title}</h2>
+              <p className="mb-2">Duration: {selectedExam.duration} minutes</p>
+              <p className="mb-2">Total Questions: {selectedExam.totalQuestions}</p>
+              <p className="mb-2">Total Marks: {selectedExam.totalMarks}</p>
+              <p className="mb-4">Passing Score: {selectedExam.passingScore}</p>
               <button
                 onClick={startExam}
                 className="mt-4 px-6 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
@@ -220,14 +289,22 @@ const CandidatePage = () => {
             <button
               onClick={handlePreviousQuestion}
               disabled={currentQuestionIndex === 0}
-              className={`px-4 py-2 rounded ${currentQuestionIndex === 0 ? 'bg-gray-300 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600'} text-white transition-colors`}
+              className={`px-4 py-2 rounded ${
+                currentQuestionIndex === 0
+                  ? 'bg-gray-300 cursor-not-allowed'
+                  : 'bg-blue-500 hover:bg-blue-600'
+              } text-white transition-colors`}
             >
               Previous
             </button>
             <button
               onClick={handleNextQuestion}
-              disabled={currentQuestionIndex === selectedExam.totalQuestions - 1}
-              className={`px-4 py-2 rounded ${currentQuestionIndex === selectedExam.totalQuestions - 1 ? 'bg-gray-300 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600'} text-white transition-colors`}
+              disabled={currentQuestionIndex === (selectedExam?.mcqs.length + selectedExam?.programmingQuestions.length - 1)}
+              className={`px-4 py-2 rounded ${
+                currentQuestionIndex === (selectedExam?.mcqs.length + selectedExam?.programmingQuestions.length - 1)
+                  ? 'bg-gray-300 cursor-not-allowed'
+                  : 'bg-blue-500 hover:bg-blue-600'
+              } text-white transition-colors`}
             >
               Next
             </button>
