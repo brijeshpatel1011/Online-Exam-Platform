@@ -25,7 +25,6 @@ public class ExamService {
     @Autowired
     private ProgrammingQuestionRepository programmingQuestionRepository;
 
-
     // Fetch all exams
     public List<Exam> getAllExams() {
         return examRepository.findAll();
@@ -60,12 +59,12 @@ public class ExamService {
         return examRepository.save(exam);
     }
 
-
-    // Update an existing exam
+    // Update an existing exam along with questions
     public Exam updateExam(int examId, Exam examDetails) {
         Exam existingExam = examRepository.findById(examId)
                 .orElseThrow(() -> new IllegalArgumentException("Exam with ID " + examId + " does not exist."));
 
+        // Update exam details
         existingExam.setTitle(examDetails.getTitle());
         existingExam.setDescription(examDetails.getDescription());
         existingExam.setTotalQuestions(examDetails.getTotalQuestions());
@@ -76,7 +75,26 @@ public class ExamService {
         existingExam.setExamStartTime(examDetails.getExamStartTime());
         existingExam.setExamEndDate(examDetails.getExamEndDate());
         existingExam.setExamEndTime(examDetails.getExamEndTime());
-        existingExam.setTotalMarks(examDetails.getTotalMarks());
+
+        // Update associated questions
+        int programmingQuestionsCount = 3;
+
+        if (examDetails.getTotalQuestions() < programmingQuestionsCount) {
+            throw new IllegalArgumentException("Total questions must be at least " + programmingQuestionsCount);
+        }
+
+        List<ProgrammingQuestion> selectedProgrammingQuestions =
+                programmingQuestionRepository.findRandomProgrammingQuestions(programmingQuestionsCount);
+
+        int mcqQuestionsCount = examDetails.getTotalQuestions() - programmingQuestionsCount;
+        List<MCQ> selectedMCQs = mcqRepository.findRandomQuestions(mcqQuestionsCount);
+
+        existingExam.setProgrammingQuestions(selectedProgrammingQuestions);
+        existingExam.setMcqs(selectedMCQs);
+
+        int totalMarks = selectedMCQs.stream().mapToInt(MCQ::getMarks).sum() +
+                selectedProgrammingQuestions.stream().mapToInt(ProgrammingQuestion::getMarks).sum();
+        existingExam.setTotalMarks(totalMarks);
 
         return examRepository.save(existingExam);
     }
@@ -100,4 +118,6 @@ public class ExamService {
         return examRepository.findByExamStartDateBetween(startDate, endDate);
     }
 }
+
+
 

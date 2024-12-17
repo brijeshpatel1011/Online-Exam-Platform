@@ -53,41 +53,59 @@ const CandidatePage = () => {
     };
   }, []);
 
-  const fetchExams = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const userCollege = "BVM";
+ const fetchExams = async () => {
+   try {
+     const token = localStorage.getItem('token');
+     const candidateId = localStorage.getItem('candidateId');
 
-      if (!userCollege) {
-        throw new Error('College information missing. Please log in again.');
-      }
+     if (!candidateId) {
+       throw new Error('Candidate ID missing. Please log in again.');
+     }
 
-      const response = await fetch(`http://localhost:8080/api/exams/college/${userCollege}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+     const candidateResponse = await fetch(`http://localhost:8080/api/examiner/candidate/${candidateId}`, {
+       method: 'POST',
+       headers: {
+         'Authorization': `Bearer ${token}`,
+         'Content-Type': 'application/json',
+       },
+     });
 
-      if (!response.ok) throw new Error('Failed to fetch exams');
+     if (!candidateResponse.ok) throw new Error('Failed to fetch candidate details');
 
-      const data = await response.json();
-      const currentDate = new Date();
+     const candidateData = await candidateResponse.json();
+     const userCollege = candidateData.college;
 
-      const scheduledExams = data.filter(exam => {
-        const examStart = new Date(`${exam.examStartDate}T${exam.examStartTime}`);
-        const examEnd = new Date(`${exam.examEndDate}T${exam.examEndTime}`);
-        return examStart <= currentDate && examEnd >= currentDate;
-      });
+     console.log(userCollege);
 
+     if (!userCollege) {
+       throw new Error('College information missing. Please contact support.');
+     }
 
-      setExams(scheduledExams);
-    } catch (error) {
-      console.error('Error fetching exams:', error);
-      setError(error.message || 'Failed to load exams');
-    } finally {
-      setLoading(false);
-    }
-  };
+     const examResponse = await fetch(`http://localhost:8080/api/exams/college/${userCollege}`, {
+       headers: {
+         'Authorization': `Bearer ${token}`,
+       },
+     });
+
+     if (!examResponse.ok) throw new Error('Failed to fetch exams');
+
+     const examsData = await examResponse.json();
+     const currentDate = new Date();
+
+     const scheduledExams = examsData.filter(exam => {
+       const examStart = new Date(`${exam.examStartDate}T${exam.examStartTime}`);
+       const examEnd = new Date(`${exam.examEndDate}T${exam.examEndTime}`);
+       return examStart <= currentDate && examEnd >= currentDate;
+     });
+
+     setExams(scheduledExams);
+   } catch (error) {
+     console.error('Error fetching exams:', error);
+     setError(error.message || 'Failed to load exams');
+   } finally {
+     setLoading(false);
+   }
+ };
 
   const handleExamSelect = async (examId) => {
     try {

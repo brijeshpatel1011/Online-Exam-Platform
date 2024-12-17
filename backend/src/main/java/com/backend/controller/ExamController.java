@@ -39,7 +39,7 @@ public class ExamController {
         return ResponseEntity.ok(savedExam);
     }
 
-    // Update an existing exam
+    // Update an existing exam along with questions
     @PutMapping("/{id}")
     public ResponseEntity<Exam> updateExam(@PathVariable int id, @RequestBody Exam examDetails) {
         try {
