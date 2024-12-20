@@ -1,9 +1,7 @@
 package com.backend.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.Date;
 
@@ -11,8 +9,8 @@ import java.util.Date;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "mcq_answers")
-public class MCQAnswers {
+@Table(name = "exam_results")
+public class ExamResult {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -25,17 +23,13 @@ public class MCQAnswers {
     @JoinColumn(name = "exam_id", nullable = false)
     private Exam exam;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "question_id", nullable = false)
-    private MCQ question;
+    @Column(name = "total_questions", nullable = false)
+    private Integer totalQuestions;
 
-    @Column(name = "selected_option", nullable = false)
-    private String selectedOption;
+    @Column(name = "correct_answers", nullable = false)
+    private Integer correctAnswers;
 
-    @Column(name = "is_correct", nullable = false)
-    private Boolean isCorrect;
-
-    @Column(name = "submitted_at", nullable = false, updatable = false)
+    @Column(name = "submitted_at", nullable = false)
     @Temporal(TemporalType.TIMESTAMP)
     private Date submittedAt = new Date();
 }

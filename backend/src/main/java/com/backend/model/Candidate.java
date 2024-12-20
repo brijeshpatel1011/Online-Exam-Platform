@@ -32,5 +32,8 @@ public class Candidate {
     private Date birthdate;
 
     private String password;
-}
+
+    public Candidate(Long cId) {
+        this.cId = cId;
+    }}
 

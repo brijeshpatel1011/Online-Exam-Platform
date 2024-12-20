@@ -70,6 +70,10 @@ public class Exam {
             inverseJoinColumns = @JoinColumn(name = "programming_question_id")
     )
     private List<ProgrammingQuestion> programmingQuestions;
+
+    public Exam(int examId) {
+        this.examId = examId;
+    }
 }
 
 

@@ -181,14 +181,67 @@ const CandidatePage = () => {
     }
   };
 
-  const handleAnswerSubmit = (answer) => {
-    if (!currentQuestion) return;
+   const handleAnswerSubmit = (answer) => {
+      if (!currentQuestion) return;
 
-    setAnswers(prev => ({
-      ...prev,
-      [currentQuestion.id]: answer
-    }));
-  };
+      setAnswers(prev => ({
+        ...prev,
+        [currentQuestion.id]: answer,
+      }));
+    };
+
+    const submitExam = async () => {
+      const token = localStorage.getItem('token');
+      const mcqAnswers = Object.entries(answers)
+        .filter(([_, value]) => typeof value === 'string')
+        .map(([questionId, answer]) => {
+          const mcqQuestion = selectedExam.mcqs.find(mcq => mcq.id === parseInt(questionId));
+
+          if (!mcqQuestion) {
+            console.error(`MCQ question with ID ${questionId} not found.`);
+            return null;
+          }
+
+          const isCorrect = mcqQuestion.correctOption === answer;
+
+          return {
+            candidateId,
+            examId: selectedExam.examId,
+            questionId,
+            selectedOption: answer,
+            isCorrect,
+          };
+        })
+        .filter(answer => answer !== null);
+
+      const programmingAnswers = Object.entries(answers)
+        .filter(([_, value]) => typeof value !== 'string')
+        .map(([questionId, answer]) => ({
+          candidateId,
+          examId: selectedExam.examId,
+          questionId,
+          solutionCode: answer,
+        }));
+
+      try {
+        const response = await fetch(`http://localhost:8080/api/answers/submit`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ candidateId, examId: selectedExam.examId, mcqAnswers, programmingAnswers }),
+        });
+
+        if (!response.ok) throw new Error('Failed to submit exam');
+        alert('Exam submitted successfully!');
+        navigate('/results');
+      } catch (error) {
+        console.error('Error submitting exam:', error);
+        alert('Error submitting exam');
+      }
+    };
+
 
   const formatDateTime = (date, time) => {
     try {
@@ -322,6 +375,7 @@ const CandidatePage = () => {
               Next
             </button>
           </div>
+           <button onClick={submitExam} className="btn btn-primary mt-4">Submit Exam</button>
         </div>
       )}
     </div>
