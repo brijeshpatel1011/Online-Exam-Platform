@@ -1,6 +1,6 @@
 USE [ExamDB]
 GO
-/****** Object:  Table [dbo].[candidate]    Script Date: 27-11-2024 20:42:51 ******/
+/****** Object:  Table [dbo].[candidate]    Script Date: 23-12-2024 15:53:53 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -19,7 +19,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[exam]    Script Date: 27-11-2024 20:42:51 ******/
+/****** Object:  Table [dbo].[exam]    Script Date: 23-12-2024 15:53:53 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -43,7 +43,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[exam_mcq]    Script Date: 27-11-2024 20:42:51 ******/
+/****** Object:  Table [dbo].[exam_mcq]    Script Date: 23-12-2024 15:53:53 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -58,7 +58,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[exam_programming_question]    Script Date: 27-11-2024 20:42:51 ******/
+/****** Object:  Table [dbo].[exam_programming_question]    Script Date: 23-12-2024 15:53:53 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -73,7 +73,29 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[examiner]    Script Date: 27-11-2024 20:42:51 ******/
+/****** Object:  Table [dbo].[exam_results]    Script Date: 23-12-2024 15:53:53 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[exam_results](
+	[id] [bigint] IDENTITY(1,1) NOT NULL,
+	[correct_answers] [int] NOT NULL,
+	[submitted_at] [datetime2](6) NOT NULL,
+	[total_questions] [int] NOT NULL,
+	[candidate_id] [bigint] NOT NULL,
+	[exam_id] [int] NOT NULL,
+	[mcq_score] [float] NOT NULL,
+	[passed] [bit] NOT NULL,
+	[programming_score] [float] NOT NULL,
+	[total_score] [float] NOT NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[examiner]    Script Date: 23-12-2024 15:53:53 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -90,7 +112,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[mcq]    Script Date: 27-11-2024 20:42:51 ******/
+/****** Object:  Table [dbo].[mcq]    Script Date: 23-12-2024 15:53:53 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -112,7 +134,44 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[programming_question]    Script Date: 27-11-2024 20:42:51 ******/
+/****** Object:  Table [dbo].[mcq_answers]    Script Date: 23-12-2024 15:53:53 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[mcq_answers](
+	[id] [bigint] IDENTITY(1,1) NOT NULL,
+	[selected_option] [varchar](255) NOT NULL,
+	[submitted_at] [datetime2](6) NOT NULL,
+	[candidate_id] [bigint] NOT NULL,
+	[exam_id] [int] NOT NULL,
+	[question_id] [bigint] NOT NULL,
+	[is_correct] [bit] NOT NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[programming_answers]    Script Date: 23-12-2024 15:53:53 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[programming_answers](
+	[id] [bigint] IDENTITY(1,1) NOT NULL,
+	[solution_code] [text] NULL,
+	[submitted_at] [datetime2](6) NOT NULL,
+	[candidate_id] [bigint] NOT NULL,
+	[exam_id] [int] NOT NULL,
+	[question_id] [bigint] NOT NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[programming_question]    Script Date: 23-12-2024 15:53:53 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -152,97 +211,47 @@ SET IDENTITY_INSERT [dbo].[candidate] OFF
 GO
 SET IDENTITY_INSERT [dbo].[exam] ON 
 GO
-INSERT [dbo].[exam] ([exam_id], [college], [description], [duration], [exam_end_date], [exam_end_time], [exam_start_date], [exam_start_time], [passing_score], [title], [total_marks], [total_questions]) VALUES (1, N'BVM', N'Final exam for the spring semester.', 120, CAST(N'2024-12-01' AS Date), CAST(N'12:00:00' AS Time), CAST(N'2024-12-01' AS Date), CAST(N'10:00:00' AS Time), 35, N'Spring Semester Exam', 100, 50)
-GO
-INSERT [dbo].[exam] ([exam_id], [college], [description], [duration], [exam_end_date], [exam_end_time], [exam_start_date], [exam_start_time], [passing_score], [title], [total_marks], [total_questions]) VALUES (5, N'BVM', N'Demo.', 15, CAST(N'2024-12-01' AS Date), CAST(N'10:15:00' AS Time), CAST(N'2024-12-01' AS Date), CAST(N'10:00:00' AS Time), 5, N'Demo Exam', 10, 10)
-GO
-INSERT [dbo].[exam] ([exam_id], [college], [description], [duration], [exam_end_date], [exam_end_time], [exam_start_date], [exam_start_time], [passing_score], [title], [total_marks], [total_questions]) VALUES (6, N'BVM', N'Demo.', 60, CAST(N'2024-12-01' AS Date), CAST(N'11:00:00' AS Time), CAST(N'2024-12-01' AS Date), CAST(N'10:00:00' AS Time), 5, N'Demo-Programming Exam', 10, 10)
-GO
-INSERT [dbo].[exam] ([exam_id], [college], [description], [duration], [exam_end_date], [exam_end_time], [exam_start_date], [exam_start_time], [passing_score], [title], [total_marks], [total_questions]) VALUES (7, N'BVM', N'Demo.', 60, CAST(N'2024-12-01' AS Date), CAST(N'11:00:00' AS Time), CAST(N'2024-12-01' AS Date), CAST(N'10:00:00' AS Time), 5, N'Demo-Programming Exam', 10, 10)
-GO
-INSERT [dbo].[exam] ([exam_id], [college], [description], [duration], [exam_end_date], [exam_end_time], [exam_start_date], [exam_start_time], [passing_score], [title], [total_marks], [total_questions]) VALUES (8, N'BVM', N'Demo.', 60, CAST(N'2024-12-01' AS Date), CAST(N'11:00:00' AS Time), CAST(N'2024-12-01' AS Date), CAST(N'10:00:00' AS Time), 5, N'Demo-Programming Exam', 22, 10)
+INSERT [dbo].[exam] ([exam_id], [college], [description], [duration], [exam_end_date], [exam_end_time], [exam_start_date], [exam_start_time], [passing_score], [title], [total_marks], [total_questions]) VALUES (13, N'BVM', N'Demo.', 120, CAST(N'2024-12-23' AS Date), CAST(N'15:59:00' AS Time), CAST(N'2024-12-23' AS Date), CAST(N'13:59:00' AS Time), 5, N'ExamUpdate', 17, 5)
 GO
 SET IDENTITY_INSERT [dbo].[exam] OFF
 GO
-INSERT [dbo].[exam_mcq] ([exam_id], [mcq_id]) VALUES (5, 12)
+INSERT [dbo].[exam_mcq] ([exam_id], [mcq_id]) VALUES (13, 13)
 GO
-INSERT [dbo].[exam_mcq] ([exam_id], [mcq_id]) VALUES (5, 14)
+INSERT [dbo].[exam_mcq] ([exam_id], [mcq_id]) VALUES (13, 31)
 GO
-INSERT [dbo].[exam_mcq] ([exam_id], [mcq_id]) VALUES (5, 19)
+INSERT [dbo].[exam_programming_question] ([exam_id], [programming_question_id]) VALUES (13, 1)
 GO
-INSERT [dbo].[exam_mcq] ([exam_id], [mcq_id]) VALUES (5, 20)
+INSERT [dbo].[exam_programming_question] ([exam_id], [programming_question_id]) VALUES (13, 2)
 GO
-INSERT [dbo].[exam_mcq] ([exam_id], [mcq_id]) VALUES (5, 21)
+INSERT [dbo].[exam_programming_question] ([exam_id], [programming_question_id]) VALUES (13, 3)
 GO
-INSERT [dbo].[exam_mcq] ([exam_id], [mcq_id]) VALUES (5, 22)
+SET IDENTITY_INSERT [dbo].[exam_results] ON 
 GO
-INSERT [dbo].[exam_mcq] ([exam_id], [mcq_id]) VALUES (5, 24)
+INSERT [dbo].[exam_results] ([id], [correct_answers], [submitted_at], [total_questions], [candidate_id], [exam_id], [mcq_score], [passed], [programming_score], [total_score]) VALUES (1, 0, CAST(N'2024-12-22T12:01:06.1060000' AS DateTime2), 5, 9, 13, 0, 0, 0, 0)
 GO
-INSERT [dbo].[exam_mcq] ([exam_id], [mcq_id]) VALUES (5, 27)
+INSERT [dbo].[exam_results] ([id], [correct_answers], [submitted_at], [total_questions], [candidate_id], [exam_id], [mcq_score], [passed], [programming_score], [total_score]) VALUES (2, 0, CAST(N'2024-12-22T12:03:47.4570000' AS DateTime2), 5, 9, 13, 0, 0, 0, 0)
 GO
-INSERT [dbo].[exam_mcq] ([exam_id], [mcq_id]) VALUES (5, 28)
+INSERT [dbo].[exam_results] ([id], [correct_answers], [submitted_at], [total_questions], [candidate_id], [exam_id], [mcq_score], [passed], [programming_score], [total_score]) VALUES (3, 0, CAST(N'2024-12-22T12:11:48.9550000' AS DateTime2), 5, 9, 13, 0, 0, 0, 0)
 GO
-INSERT [dbo].[exam_mcq] ([exam_id], [mcq_id]) VALUES (5, 30)
+INSERT [dbo].[exam_results] ([id], [correct_answers], [submitted_at], [total_questions], [candidate_id], [exam_id], [mcq_score], [passed], [programming_score], [total_score]) VALUES (4, 0, CAST(N'2024-12-23T10:00:20.9030000' AS DateTime2), 5, 9, 13, 0, 0, 0, 0)
 GO
-INSERT [dbo].[exam_mcq] ([exam_id], [mcq_id]) VALUES (6, 12)
+INSERT [dbo].[exam_results] ([id], [correct_answers], [submitted_at], [total_questions], [candidate_id], [exam_id], [mcq_score], [passed], [programming_score], [total_score]) VALUES (5, 0, CAST(N'2024-12-23T10:06:27.6470000' AS DateTime2), 5, 9, 13, 0, 0, 0, 0)
 GO
-INSERT [dbo].[exam_mcq] ([exam_id], [mcq_id]) VALUES (6, 13)
+INSERT [dbo].[exam_results] ([id], [correct_answers], [submitted_at], [total_questions], [candidate_id], [exam_id], [mcq_score], [passed], [programming_score], [total_score]) VALUES (6, 0, CAST(N'2024-12-23T10:09:27.6130000' AS DateTime2), 5, 9, 13, 0, 0, 0, 0)
 GO
-INSERT [dbo].[exam_mcq] ([exam_id], [mcq_id]) VALUES (6, 15)
+INSERT [dbo].[exam_results] ([id], [correct_answers], [submitted_at], [total_questions], [candidate_id], [exam_id], [mcq_score], [passed], [programming_score], [total_score]) VALUES (7, 0, CAST(N'2024-12-23T10:19:25.9320000' AS DateTime2), 5, 9, 13, 0, 0, 0, 0)
 GO
-INSERT [dbo].[exam_mcq] ([exam_id], [mcq_id]) VALUES (6, 21)
+INSERT [dbo].[exam_results] ([id], [correct_answers], [submitted_at], [total_questions], [candidate_id], [exam_id], [mcq_score], [passed], [programming_score], [total_score]) VALUES (8, 0, CAST(N'2024-12-23T10:26:37.3900000' AS DateTime2), 5, 9, 13, 0, 0, 0, 0)
 GO
-INSERT [dbo].[exam_mcq] ([exam_id], [mcq_id]) VALUES (6, 23)
+INSERT [dbo].[exam_results] ([id], [correct_answers], [submitted_at], [total_questions], [candidate_id], [exam_id], [mcq_score], [passed], [programming_score], [total_score]) VALUES (9, 0, CAST(N'2024-12-23T10:41:36.9060000' AS DateTime2), 5, 9, 13, 0, 0, 0, 0)
 GO
-INSERT [dbo].[exam_mcq] ([exam_id], [mcq_id]) VALUES (6, 24)
+INSERT [dbo].[exam_results] ([id], [correct_answers], [submitted_at], [total_questions], [candidate_id], [exam_id], [mcq_score], [passed], [programming_score], [total_score]) VALUES (10, 2, CAST(N'2024-12-23T10:48:43.8750000' AS DateTime2), 5, 9, 13, 100, 1, 0, 50)
 GO
-INSERT [dbo].[exam_mcq] ([exam_id], [mcq_id]) VALUES (6, 28)
+INSERT [dbo].[exam_results] ([id], [correct_answers], [submitted_at], [total_questions], [candidate_id], [exam_id], [mcq_score], [passed], [programming_score], [total_score]) VALUES (11, 0, CAST(N'2024-12-23T11:15:51.2680000' AS DateTime2), 5, 9, 13, 0, 0, 0, 0)
 GO
-INSERT [dbo].[exam_mcq] ([exam_id], [mcq_id]) VALUES (7, 12)
+INSERT [dbo].[exam_results] ([id], [correct_answers], [submitted_at], [total_questions], [candidate_id], [exam_id], [mcq_score], [passed], [programming_score], [total_score]) VALUES (12, 2, CAST(N'2024-12-23T11:38:01.5130000' AS DateTime2), 5, 9, 13, 100, 1, 0, 50)
 GO
-INSERT [dbo].[exam_mcq] ([exam_id], [mcq_id]) VALUES (7, 15)
-GO
-INSERT [dbo].[exam_mcq] ([exam_id], [mcq_id]) VALUES (7, 16)
-GO
-INSERT [dbo].[exam_mcq] ([exam_id], [mcq_id]) VALUES (7, 18)
-GO
-INSERT [dbo].[exam_mcq] ([exam_id], [mcq_id]) VALUES (7, 21)
-GO
-INSERT [dbo].[exam_mcq] ([exam_id], [mcq_id]) VALUES (7, 24)
-GO
-INSERT [dbo].[exam_mcq] ([exam_id], [mcq_id]) VALUES (7, 26)
-GO
-INSERT [dbo].[exam_mcq] ([exam_id], [mcq_id]) VALUES (8, 13)
-GO
-INSERT [dbo].[exam_mcq] ([exam_id], [mcq_id]) VALUES (8, 16)
-GO
-INSERT [dbo].[exam_mcq] ([exam_id], [mcq_id]) VALUES (8, 19)
-GO
-INSERT [dbo].[exam_mcq] ([exam_id], [mcq_id]) VALUES (8, 20)
-GO
-INSERT [dbo].[exam_mcq] ([exam_id], [mcq_id]) VALUES (8, 22)
-GO
-INSERT [dbo].[exam_mcq] ([exam_id], [mcq_id]) VALUES (8, 27)
-GO
-INSERT [dbo].[exam_mcq] ([exam_id], [mcq_id]) VALUES (8, 28)
-GO
-INSERT [dbo].[exam_programming_question] ([exam_id], [programming_question_id]) VALUES (6, 1)
-GO
-INSERT [dbo].[exam_programming_question] ([exam_id], [programming_question_id]) VALUES (6, 2)
-GO
-INSERT [dbo].[exam_programming_question] ([exam_id], [programming_question_id]) VALUES (6, 3)
-GO
-INSERT [dbo].[exam_programming_question] ([exam_id], [programming_question_id]) VALUES (7, 1)
-GO
-INSERT [dbo].[exam_programming_question] ([exam_id], [programming_question_id]) VALUES (7, 2)
-GO
-INSERT [dbo].[exam_programming_question] ([exam_id], [programming_question_id]) VALUES (7, 3)
-GO
-INSERT [dbo].[exam_programming_question] ([exam_id], [programming_question_id]) VALUES (8, 1)
-GO
-INSERT [dbo].[exam_programming_question] ([exam_id], [programming_question_id]) VALUES (8, 2)
-GO
-INSERT [dbo].[exam_programming_question] ([exam_id], [programming_question_id]) VALUES (8, 3)
+SET IDENTITY_INSERT [dbo].[exam_results] OFF
 GO
 SET IDENTITY_INSERT [dbo].[examiner] ON 
 GO
@@ -294,6 +303,146 @@ INSERT [dbo].[mcq] ([id], [correct_answer], [category], [optiona], [optionb], [o
 GO
 SET IDENTITY_INSERT [dbo].[mcq] OFF
 GO
+SET IDENTITY_INSERT [dbo].[mcq_answers] ON 
+GO
+INSERT [dbo].[mcq_answers] ([id], [selected_option], [submitted_at], [candidate_id], [exam_id], [question_id], [is_correct]) VALUES (1, N'Windows', CAST(N'2024-12-22T12:01:05.8310000' AS DateTime2), 9, 13, 19, 0)
+GO
+INSERT [dbo].[mcq_answers] ([id], [selected_option], [submitted_at], [candidate_id], [exam_id], [question_id], [is_correct]) VALUES (2, N'CSS', CAST(N'2024-12-22T12:01:05.9880000' AS DateTime2), 9, 13, 27, 0)
+GO
+INSERT [dbo].[mcq_answers] ([id], [selected_option], [submitted_at], [candidate_id], [exam_id], [question_id], [is_correct]) VALUES (3, N'Linux', CAST(N'2024-12-22T12:03:47.4220000' AS DateTime2), 9, 13, 19, 0)
+GO
+INSERT [dbo].[mcq_answers] ([id], [selected_option], [submitted_at], [candidate_id], [exam_id], [question_id], [is_correct]) VALUES (4, N'JavaScript', CAST(N'2024-12-22T12:03:47.4350000' AS DateTime2), 9, 13, 27, 0)
+GO
+INSERT [dbo].[mcq_answers] ([id], [selected_option], [submitted_at], [candidate_id], [exam_id], [question_id], [is_correct]) VALUES (5, N'Linux', CAST(N'2024-12-22T12:11:48.9260000' AS DateTime2), 9, 13, 19, 0)
+GO
+INSERT [dbo].[mcq_answers] ([id], [selected_option], [submitted_at], [candidate_id], [exam_id], [question_id], [is_correct]) VALUES (6, N'JavaScript', CAST(N'2024-12-22T12:11:48.9360000' AS DateTime2), 9, 13, 27, 0)
+GO
+INSERT [dbo].[mcq_answers] ([id], [selected_option], [submitted_at], [candidate_id], [exam_id], [question_id], [is_correct]) VALUES (7, N'Boolean', CAST(N'2024-12-23T10:00:20.7870000' AS DateTime2), 9, 13, 22, 0)
+GO
+INSERT [dbo].[mcq_answers] ([id], [selected_option], [submitted_at], [candidate_id], [exam_id], [question_id], [is_correct]) VALUES (8, N'JavaScript', CAST(N'2024-12-23T10:00:20.8560000' AS DateTime2), 9, 13, 27, 0)
+GO
+INSERT [dbo].[mcq_answers] ([id], [selected_option], [submitted_at], [candidate_id], [exam_id], [question_id], [is_correct]) VALUES (9, N'Boolean', CAST(N'2024-12-23T10:06:27.6080000' AS DateTime2), 9, 13, 22, 0)
+GO
+INSERT [dbo].[mcq_answers] ([id], [selected_option], [submitted_at], [candidate_id], [exam_id], [question_id], [is_correct]) VALUES (10, N'JavaScript', CAST(N'2024-12-23T10:06:27.6240000' AS DateTime2), 9, 13, 27, 0)
+GO
+INSERT [dbo].[mcq_answers] ([id], [selected_option], [submitted_at], [candidate_id], [exam_id], [question_id], [is_correct]) VALUES (11, N'Boolean', CAST(N'2024-12-23T10:09:27.5790000' AS DateTime2), 9, 13, 22, 0)
+GO
+INSERT [dbo].[mcq_answers] ([id], [selected_option], [submitted_at], [candidate_id], [exam_id], [question_id], [is_correct]) VALUES (12, N'JavaScript', CAST(N'2024-12-23T10:09:27.5900000' AS DateTime2), 9, 13, 27, 0)
+GO
+INSERT [dbo].[mcq_answers] ([id], [selected_option], [submitted_at], [candidate_id], [exam_id], [question_id], [is_correct]) VALUES (13, N'Boolean', CAST(N'2024-12-23T10:19:25.9000000' AS DateTime2), 9, 13, 22, 0)
+GO
+INSERT [dbo].[mcq_answers] ([id], [selected_option], [submitted_at], [candidate_id], [exam_id], [question_id], [is_correct]) VALUES (14, N'JavaScript', CAST(N'2024-12-23T10:19:25.9090000' AS DateTime2), 9, 13, 27, 0)
+GO
+INSERT [dbo].[mcq_answers] ([id], [selected_option], [submitted_at], [candidate_id], [exam_id], [question_id], [is_correct]) VALUES (15, N'Boolean', CAST(N'2024-12-23T10:26:37.3540000' AS DateTime2), 9, 13, 22, 0)
+GO
+INSERT [dbo].[mcq_answers] ([id], [selected_option], [submitted_at], [candidate_id], [exam_id], [question_id], [is_correct]) VALUES (16, N'JavaScript', CAST(N'2024-12-23T10:26:37.3670000' AS DateTime2), 9, 13, 27, 0)
+GO
+INSERT [dbo].[mcq_answers] ([id], [selected_option], [submitted_at], [candidate_id], [exam_id], [question_id], [is_correct]) VALUES (17, N'Boolean', CAST(N'2024-12-23T10:41:36.8630000' AS DateTime2), 9, 13, 22, 0)
+GO
+INSERT [dbo].[mcq_answers] ([id], [selected_option], [submitted_at], [candidate_id], [exam_id], [question_id], [is_correct]) VALUES (18, N'JavaScript', CAST(N'2024-12-23T10:41:36.8730000' AS DateTime2), 9, 13, 27, 0)
+GO
+INSERT [dbo].[mcq_answers] ([id], [selected_option], [submitted_at], [candidate_id], [exam_id], [question_id], [is_correct]) VALUES (19, N'A', CAST(N'2024-12-23T10:48:43.8400000' AS DateTime2), 9, 13, 24, 1)
+GO
+INSERT [dbo].[mcq_answers] ([id], [selected_option], [submitted_at], [candidate_id], [exam_id], [question_id], [is_correct]) VALUES (20, N'B', CAST(N'2024-12-23T10:48:43.8480000' AS DateTime2), 9, 13, 30, 1)
+GO
+INSERT [dbo].[mcq_answers] ([id], [selected_option], [submitted_at], [candidate_id], [exam_id], [question_id], [is_correct]) VALUES (21, N'Boolean', CAST(N'2024-12-23T11:15:51.2340000' AS DateTime2), 9, 13, 22, 0)
+GO
+INSERT [dbo].[mcq_answers] ([id], [selected_option], [submitted_at], [candidate_id], [exam_id], [question_id], [is_correct]) VALUES (22, N'JavaScript', CAST(N'2024-12-23T11:15:51.2450000' AS DateTime2), 9, 13, 27, 0)
+GO
+INSERT [dbo].[mcq_answers] ([id], [selected_option], [submitted_at], [candidate_id], [exam_id], [question_id], [is_correct]) VALUES (23, N'C', CAST(N'2024-12-23T11:38:01.4500000' AS DateTime2), 9, 13, 22, 1)
+GO
+INSERT [dbo].[mcq_answers] ([id], [selected_option], [submitted_at], [candidate_id], [exam_id], [question_id], [is_correct]) VALUES (24, N'C', CAST(N'2024-12-23T11:38:01.4590000' AS DateTime2), 9, 13, 27, 1)
+GO
+SET IDENTITY_INSERT [dbo].[mcq_answers] OFF
+GO
+SET IDENTITY_INSERT [dbo].[programming_answers] ON 
+GO
+INSERT [dbo].[programming_answers] ([id], [solution_code], [submitted_at], [candidate_id], [exam_id], [question_id]) VALUES (1, N'dfveger', CAST(N'2024-12-22T12:01:06.0030000' AS DateTime2), 9, 13, 1)
+GO
+INSERT [dbo].[programming_answers] ([id], [solution_code], [submitted_at], [candidate_id], [exam_id], [question_id]) VALUES (2, N'sverger', CAST(N'2024-12-22T12:01:06.0970000' AS DateTime2), 9, 13, 2)
+GO
+INSERT [dbo].[programming_answers] ([id], [solution_code], [submitted_at], [candidate_id], [exam_id], [question_id]) VALUES (3, N'svcsgerg', CAST(N'2024-12-22T12:01:06.1030000' AS DateTime2), 9, 13, 3)
+GO
+INSERT [dbo].[programming_answers] ([id], [solution_code], [submitted_at], [candidate_id], [exam_id], [question_id]) VALUES (4, N'SCsdfwrg', CAST(N'2024-12-22T12:03:47.4410000' AS DateTime2), 9, 13, 1)
+GO
+INSERT [dbo].[programming_answers] ([id], [solution_code], [submitted_at], [candidate_id], [exam_id], [question_id]) VALUES (5, N'svsdgrg', CAST(N'2024-12-22T12:03:47.4490000' AS DateTime2), 9, 13, 2)
+GO
+INSERT [dbo].[programming_answers] ([id], [solution_code], [submitted_at], [candidate_id], [exam_id], [question_id]) VALUES (6, N'x dcvf', CAST(N'2024-12-22T12:03:47.4540000' AS DateTime2), 9, 13, 3)
+GO
+INSERT [dbo].[programming_answers] ([id], [solution_code], [submitted_at], [candidate_id], [exam_id], [question_id]) VALUES (7, N'zcsdcdegerg', CAST(N'2024-12-22T12:11:48.9410000' AS DateTime2), 9, 13, 1)
+GO
+INSERT [dbo].[programming_answers] ([id], [solution_code], [submitted_at], [candidate_id], [exam_id], [question_id]) VALUES (8, N'wefergergef', CAST(N'2024-12-22T12:11:48.9490000' AS DateTime2), 9, 13, 2)
+GO
+INSERT [dbo].[programming_answers] ([id], [solution_code], [submitted_at], [candidate_id], [exam_id], [question_id]) VALUES (9, N'fwferwgfr', CAST(N'2024-12-22T12:11:48.9530000' AS DateTime2), 9, 13, 3)
+GO
+INSERT [dbo].[programming_answers] ([id], [solution_code], [submitted_at], [candidate_id], [exam_id], [question_id]) VALUES (10, N'hhhhhhh', CAST(N'2024-12-23T10:00:20.8710000' AS DateTime2), 9, 13, 1)
+GO
+INSERT [dbo].[programming_answers] ([id], [solution_code], [submitted_at], [candidate_id], [exam_id], [question_id]) VALUES (11, N'hhhhh', CAST(N'2024-12-23T10:00:20.8940000' AS DateTime2), 9, 13, 2)
+GO
+INSERT [dbo].[programming_answers] ([id], [solution_code], [submitted_at], [candidate_id], [exam_id], [question_id]) VALUES (12, N'hhhhhh', CAST(N'2024-12-23T10:00:20.9000000' AS DateTime2), 9, 13, 3)
+GO
+INSERT [dbo].[programming_answers] ([id], [solution_code], [submitted_at], [candidate_id], [exam_id], [question_id]) VALUES (13, N'iiiii', CAST(N'2024-12-23T10:06:27.6300000' AS DateTime2), 9, 13, 1)
+GO
+INSERT [dbo].[programming_answers] ([id], [solution_code], [submitted_at], [candidate_id], [exam_id], [question_id]) VALUES (14, N'iiii', CAST(N'2024-12-23T10:06:27.6400000' AS DateTime2), 9, 13, 2)
+GO
+INSERT [dbo].[programming_answers] ([id], [solution_code], [submitted_at], [candidate_id], [exam_id], [question_id]) VALUES (15, N'i', CAST(N'2024-12-23T10:06:27.6440000' AS DateTime2), 9, 13, 3)
+GO
+INSERT [dbo].[programming_answers] ([id], [solution_code], [submitted_at], [candidate_id], [exam_id], [question_id]) VALUES (16, N'yy', CAST(N'2024-12-23T10:09:27.5980000' AS DateTime2), 9, 13, 1)
+GO
+INSERT [dbo].[programming_answers] ([id], [solution_code], [submitted_at], [candidate_id], [exam_id], [question_id]) VALUES (17, N'yy', CAST(N'2024-12-23T10:09:27.6050000' AS DateTime2), 9, 13, 2)
+GO
+INSERT [dbo].[programming_answers] ([id], [solution_code], [submitted_at], [candidate_id], [exam_id], [question_id]) VALUES (18, N'yyy', CAST(N'2024-12-23T10:09:27.6110000' AS DateTime2), 9, 13, 3)
+GO
+INSERT [dbo].[programming_answers] ([id], [solution_code], [submitted_at], [candidate_id], [exam_id], [question_id]) VALUES (19, N'aa', CAST(N'2024-12-23T10:19:25.9160000' AS DateTime2), 9, 13, 1)
+GO
+INSERT [dbo].[programming_answers] ([id], [solution_code], [submitted_at], [candidate_id], [exam_id], [question_id]) VALUES (20, N'aa', CAST(N'2024-12-23T10:19:25.9250000' AS DateTime2), 9, 13, 2)
+GO
+INSERT [dbo].[programming_answers] ([id], [solution_code], [submitted_at], [candidate_id], [exam_id], [question_id]) VALUES (21, N'aa', CAST(N'2024-12-23T10:19:25.9300000' AS DateTime2), 9, 13, 3)
+GO
+INSERT [dbo].[programming_answers] ([id], [solution_code], [submitted_at], [candidate_id], [exam_id], [question_id]) VALUES (22, N'sss', CAST(N'2024-12-23T10:26:37.3740000' AS DateTime2), 9, 13, 1)
+GO
+INSERT [dbo].[programming_answers] ([id], [solution_code], [submitted_at], [candidate_id], [exam_id], [question_id]) VALUES (23, N's', CAST(N'2024-12-23T10:26:37.3820000' AS DateTime2), 9, 13, 2)
+GO
+INSERT [dbo].[programming_answers] ([id], [solution_code], [submitted_at], [candidate_id], [exam_id], [question_id]) VALUES (24, N's', CAST(N'2024-12-23T10:26:37.3870000' AS DateTime2), 9, 13, 3)
+GO
+INSERT [dbo].[programming_answers] ([id], [solution_code], [submitted_at], [candidate_id], [exam_id], [question_id]) VALUES (25, N'lll', CAST(N'2024-12-23T10:41:36.8840000' AS DateTime2), 9, 13, 1)
+GO
+INSERT [dbo].[programming_answers] ([id], [solution_code], [submitted_at], [candidate_id], [exam_id], [question_id]) VALUES (26, N'll', CAST(N'2024-12-23T10:41:36.8960000' AS DateTime2), 9, 13, 2)
+GO
+INSERT [dbo].[programming_answers] ([id], [solution_code], [submitted_at], [candidate_id], [exam_id], [question_id]) VALUES (27, N'llllll', CAST(N'2024-12-23T10:41:36.9010000' AS DateTime2), 9, 13, 3)
+GO
+INSERT [dbo].[programming_answers] ([id], [solution_code], [submitted_at], [candidate_id], [exam_id], [question_id]) VALUES (28, N'public class Solution {
+    public static void main(String[] args) {
+        System.out.println("Hello World");
+    }
+}', CAST(N'2024-12-23T10:48:43.8570000' AS DateTime2), 9, 13, 1)
+GO
+INSERT [dbo].[programming_answers] ([id], [solution_code], [submitted_at], [candidate_id], [exam_id], [question_id]) VALUES (29, N'public class Solution {
+    public static void main(String[] args) {
+        System.out.println("Hello World");
+    }
+}', CAST(N'2024-12-23T10:48:43.8650000' AS DateTime2), 9, 13, 2)
+GO
+INSERT [dbo].[programming_answers] ([id], [solution_code], [submitted_at], [candidate_id], [exam_id], [question_id]) VALUES (30, N'public class Solution {
+    public static void main(String[] args) {
+        System.out.println("Hello World");
+    }
+}', CAST(N'2024-12-23T10:48:43.8730000' AS DateTime2), 9, 13, 3)
+GO
+INSERT [dbo].[programming_answers] ([id], [solution_code], [submitted_at], [candidate_id], [exam_id], [question_id]) VALUES (31, N'bb', CAST(N'2024-12-23T11:15:51.2530000' AS DateTime2), 9, 13, 1)
+GO
+INSERT [dbo].[programming_answers] ([id], [solution_code], [submitted_at], [candidate_id], [exam_id], [question_id]) VALUES (32, N'b', CAST(N'2024-12-23T11:15:51.2610000' AS DateTime2), 9, 13, 2)
+GO
+INSERT [dbo].[programming_answers] ([id], [solution_code], [submitted_at], [candidate_id], [exam_id], [question_id]) VALUES (33, N'b', CAST(N'2024-12-23T11:15:51.2650000' AS DateTime2), 9, 13, 3)
+GO
+INSERT [dbo].[programming_answers] ([id], [solution_code], [submitted_at], [candidate_id], [exam_id], [question_id]) VALUES (34, N'gg', CAST(N'2024-12-23T11:38:01.4650000' AS DateTime2), 9, 13, 1)
+GO
+INSERT [dbo].[programming_answers] ([id], [solution_code], [submitted_at], [candidate_id], [exam_id], [question_id]) VALUES (35, N'g', CAST(N'2024-12-23T11:38:01.5070000' AS DateTime2), 9, 13, 2)
+GO
+INSERT [dbo].[programming_answers] ([id], [solution_code], [submitted_at], [candidate_id], [exam_id], [question_id]) VALUES (36, N'g', CAST(N'2024-12-23T11:38:01.5120000' AS DateTime2), 9, 13, 3)
+GO
+SET IDENTITY_INSERT [dbo].[programming_answers] OFF
+GO
 SET IDENTITY_INSERT [dbo].[programming_question] ON 
 GO
 INSERT [dbo].[programming_question] ([id], [constraints], [description], [difficulty], [input_format], [marks], [output_format], [sample_input], [sample_output], [title]) VALUES (1, N'1 <= n <= 20', N'Write a program to compute the factorial of a given non-negative integer n. Factorial of n (n!) is the product of all positive integers less than or equal to n.', N'Easy', N'Input: A single integer n', 5, N'Output: A single integer representing n!', N'5', N'120', N'Find Factorial of a Number')
@@ -325,4 +474,44 @@ ALTER TABLE [dbo].[exam_programming_question]  WITH CHECK ADD  CONSTRAINT [FKqk6
 REFERENCES [dbo].[exam] ([exam_id])
 GO
 ALTER TABLE [dbo].[exam_programming_question] CHECK CONSTRAINT [FKqk6eeko9tcf04kkgsk1we8bj9]
+GO
+ALTER TABLE [dbo].[exam_results]  WITH CHECK ADD  CONSTRAINT [FKbxajm38ivmgk100y0jbel6i7r] FOREIGN KEY([candidate_id])
+REFERENCES [dbo].[candidate] ([c_id])
+GO
+ALTER TABLE [dbo].[exam_results] CHECK CONSTRAINT [FKbxajm38ivmgk100y0jbel6i7r]
+GO
+ALTER TABLE [dbo].[exam_results]  WITH CHECK ADD  CONSTRAINT [FKgpb0xaxltlrcdpmcvggxah0me] FOREIGN KEY([exam_id])
+REFERENCES [dbo].[exam] ([exam_id])
+GO
+ALTER TABLE [dbo].[exam_results] CHECK CONSTRAINT [FKgpb0xaxltlrcdpmcvggxah0me]
+GO
+ALTER TABLE [dbo].[mcq_answers]  WITH CHECK ADD  CONSTRAINT [FK2me1bj8vdxypm638u25clk72h] FOREIGN KEY([question_id])
+REFERENCES [dbo].[mcq] ([id])
+GO
+ALTER TABLE [dbo].[mcq_answers] CHECK CONSTRAINT [FK2me1bj8vdxypm638u25clk72h]
+GO
+ALTER TABLE [dbo].[mcq_answers]  WITH CHECK ADD  CONSTRAINT [FK9mrsc2kfc3p281nm2mia1p1y] FOREIGN KEY([exam_id])
+REFERENCES [dbo].[exam] ([exam_id])
+GO
+ALTER TABLE [dbo].[mcq_answers] CHECK CONSTRAINT [FK9mrsc2kfc3p281nm2mia1p1y]
+GO
+ALTER TABLE [dbo].[mcq_answers]  WITH CHECK ADD  CONSTRAINT [FKm8mt0pntgadc8fythjs0vj3ay] FOREIGN KEY([candidate_id])
+REFERENCES [dbo].[candidate] ([c_id])
+GO
+ALTER TABLE [dbo].[mcq_answers] CHECK CONSTRAINT [FKm8mt0pntgadc8fythjs0vj3ay]
+GO
+ALTER TABLE [dbo].[programming_answers]  WITH CHECK ADD  CONSTRAINT [FK67syu6a33fpuymu4j3qjg35wx] FOREIGN KEY([question_id])
+REFERENCES [dbo].[programming_question] ([id])
+GO
+ALTER TABLE [dbo].[programming_answers] CHECK CONSTRAINT [FK67syu6a33fpuymu4j3qjg35wx]
+GO
+ALTER TABLE [dbo].[programming_answers]  WITH CHECK ADD  CONSTRAINT [FK8hu8xmg9m0qr36f2oyf4l4qsk] FOREIGN KEY([exam_id])
+REFERENCES [dbo].[exam] ([exam_id])
+GO
+ALTER TABLE [dbo].[programming_answers] CHECK CONSTRAINT [FK8hu8xmg9m0qr36f2oyf4l4qsk]
+GO
+ALTER TABLE [dbo].[programming_answers]  WITH CHECK ADD  CONSTRAINT [FKi3wfnm89itml2pswlaf3v4yyk] FOREIGN KEY([candidate_id])
+REFERENCES [dbo].[candidate] ([c_id])
+GO
+ALTER TABLE [dbo].[programming_answers] CHECK CONSTRAINT [FKi3wfnm89itml2pswlaf3v4yyk]
 GO

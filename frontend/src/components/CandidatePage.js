@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { logout } from '../services/authService';
 
@@ -12,26 +12,26 @@ const CandidatePage = () => {
   const [answers, setAnswers] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [examTimer, setExamTimer] = useState(null);
+  const [warningShown, setWarningShown] = useState(false);
 
   const candidateId = localStorage.getItem('candidateId');
 
-  useEffect(() => {
-    if (!candidateId) {
-      navigate('/login');
-      return;
-    }
-    fetchExams();
-  }, [candidateId, navigate]);
+  // Format time function
+  const formatTime = (seconds) => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
 
+  // Prevent copy/paste and other browser actions
   useEffect(() => {
     const handleCopyPaste = (e) => e.preventDefault();
     const handleContextMenu = (e) => e.preventDefault();
     const handleDragStart = (e) => e.preventDefault();
     const handleKeyDown = (e) => {
-      if (
-        (e.ctrlKey || e.metaKey) &&
-        ['c', 'v', 'x', 'a'].includes(e.key.toLowerCase())
-      ) {
+      if ((e.ctrlKey || e.metaKey) && ['c', 'v', 'x', 'a'].includes(e.key.toLowerCase())) {
         e.preventDefault();
       }
     };
@@ -53,60 +53,212 @@ const CandidatePage = () => {
     };
   }, []);
 
- const fetchExams = async () => {
-   try {
-     const token = localStorage.getItem('token');
-     const candidateId = localStorage.getItem('candidateId');
+  // Initial authentication check
+  useEffect(() => {
+    if (!candidateId) {
+      navigate('/login');
+      return;
+    }
+    fetchExams();
+  }, [candidateId, navigate]);
 
-     if (!candidateId) {
-       throw new Error('Candidate ID missing. Please log in again.');
+  // Move handleLogout before submitExam to avoid dependency issues
+  const handleLogout = useCallback(() => {
+    logout();
+    navigate('/');
+  }, [navigate]);
+
+
+ const submitExam = useCallback(async (isAutoSubmit = false) => {
+     try {
+       const token = localStorage.getItem('token');
+       const candidateId = localStorage.getItem('candidateId');
+
+       if (!token || !candidateId) {
+         alert('Session expired. Please login again.');
+         handleLogout();
+         return;
+       }
+
+       const mcqAnswers = selectedExam.mcqs
+         .map(mcq => ({
+           question: { id: mcq.id },
+           selectedOption: answers[mcq.id] || ''
+         }))
+         .filter(answer => answer.selectedOption !== '');
+
+       const programmingAnswers = selectedExam.programmingQuestions
+         .map(q => ({
+           question: { id: q.id },
+           solutionCode: answers[q.id] || ''
+         }))
+         .filter(answer => answer.solutionCode !== '');
+
+       const timeSpent = selectedExam.duration * 60 - examTimer;
+
+
+       const url = `http://localhost:8080/api/answers/submit?candidateId=${candidateId}&examId=${selectedExam.examId}`;
+
+       const response = await fetch(url, {
+         method: 'POST',
+         headers: {
+           'Authorization': `Bearer ${token}`,
+           'Content-Type': 'application/json',
+         },
+         body: JSON.stringify({
+           mcqAnswers,
+           programmingAnswers,
+           isAutoSubmit,
+           timeSpent
+         })
+       });
+
+       // Rest of the function remains the same
+       if (!response.ok) {
+         if (response.status === 403 || response.status === 401) {
+           throw new Error('Session expired');
+         }
+         const errorText = await response.text();
+         throw new Error(errorText || 'Failed to submit exam');
+       }
+
+       const result = await response.json();
+
+       if (result.success) {
+         alert(isAutoSubmit ? 'Exam auto-submitted due to time completion or tab change.' : 'Exam submitted successfully!');
+         navigate('/results');
+       } else {
+         throw new Error(result.message || 'Failed to submit exam');
+       }
+     } catch (error) {
+       console.error('Error submitting exam:', error);
+
+       if (error.message.includes('Session expired') || error.message.includes('Unauthorized')) {
+         alert('Session expired. Please login again.');
+         handleLogout();
+       } else if (isAutoSubmit) {
+         alert('Auto-submission failed. Please retry.');
+       } else {
+         alert(`Error submitting exam: ${error.message}`);
+       }
      }
+   }, [selectedExam, answers, examTimer, navigate, handleLogout]);
 
-     const candidateResponse = await fetch(`http://localhost:8080/api/examiner/candidate/${candidateId}`, {
-       method: 'POST',
-       headers: {
-         'Authorization': `Bearer ${token}`,
-         'Content-Type': 'application/json',
-       },
-     });
+  // Updated timer effect with all dependencies
+    useEffect(() => {
+      let timerInterval;
 
-     if (!candidateResponse.ok) throw new Error('Failed to fetch candidate details');
+      if (examStarted && selectedExam?.duration) {
+        const totalSeconds = selectedExam.duration * 60;
 
-     const candidateData = await candidateResponse.json();
-     const userCollege = candidateData.college;
+        if (!examTimer) {
+          setExamTimer(totalSeconds);
+        }
 
-     console.log(userCollege);
+        timerInterval = setInterval(() => {
+          setExamTimer((prevTime) => {
+            if (prevTime <= 0) {
+              clearInterval(timerInterval);
+              submitExam(true);
+              return 0;
+            }
 
-     if (!userCollege) {
-       throw new Error('College information missing. Please contact support.');
-     }
+            if (prevTime === 300 && !warningShown) {
+              alert('5 minutes remaining!');
+              setWarningShown(true);
+            }
 
-     const examResponse = await fetch(`http://localhost:8080/api/exams/college/${userCollege}`, {
-       headers: {
-         'Authorization': `Bearer ${token}`,
-       },
-     });
+            return prevTime - 1;
+          });
+        }, 1000);
+      }
 
-     if (!examResponse.ok) throw new Error('Failed to fetch exams');
+      return () => {
+        if (timerInterval) {
+          clearInterval(timerInterval);
+        }
+      };
+    }, [examStarted, selectedExam, warningShown, examTimer, submitExam]);
 
-     const examsData = await examResponse.json();
-     const currentDate = new Date();
 
-     const scheduledExams = examsData.filter(exam => {
-       const examStart = new Date(`${exam.examStartDate}T${exam.examStartTime}`);
-       const examEnd = new Date(`${exam.examEndDate}T${exam.examEndTime}`);
-       return examStart <= currentDate && examEnd >= currentDate;
-     });
 
-     setExams(scheduledExams);
-   } catch (error) {
-     console.error('Error fetching exams:', error);
-     setError(error.message || 'Failed to load exams');
-   } finally {
-     setLoading(false);
-   }
- };
+  // Updated tab change detection effect with submitExam dependency
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (examStarted && document.visibilityState === 'hidden') {
+        submitExam(true);
+      }
+    };
 
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [examStarted, submitExam]);
+
+
+
+
+
+
+  // Fetch exams
+  const fetchExams = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const candidateId = localStorage.getItem('candidateId');
+
+      if (!candidateId) {
+        throw new Error('Candidate ID missing. Please log in again.');
+      }
+
+      const candidateResponse = await fetch(
+        `http://localhost:8080/api/examiner/candidate/${candidateId}`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (!candidateResponse.ok) throw new Error('Failed to fetch candidate details');
+
+      const candidateData = await candidateResponse.json();
+      const userCollege = candidateData.college;
+
+      if (!userCollege) {
+        throw new Error('College information missing. Please contact support.');
+      }
+
+      const examResponse = await fetch(
+        `http://localhost:8080/api/exams/college/${userCollege}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!examResponse.ok) throw new Error('Failed to fetch exams');
+
+      const examsData = await examResponse.json();
+      const currentDate = new Date();
+
+      const scheduledExams = examsData.filter(exam => {
+        const examStart = new Date(`${exam.examStartDate}T${exam.examStartTime}`);
+        const examEnd = new Date(`${exam.examEndDate}T${exam.examEndTime}`);
+        return examStart <= currentDate && examEnd >= currentDate;
+      });
+
+      setExams(scheduledExams);
+    } catch (error) {
+      console.error('Error fetching exams:', error);
+      setError(error.message || 'Failed to load exams');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle exam selection
   const handleExamSelect = async (examId) => {
     try {
       const token = localStorage.getItem('token');
@@ -122,7 +274,12 @@ const CandidatePage = () => {
       const transformedMcqs = examData.mcqs.map(mcq => ({
         id: mcq.id,
         question: mcq.question,
-        options: [mcq.optionA, mcq.optionB, mcq.optionC, mcq.optionD]
+        options: [
+          { value: mcq.optionA, label: 'A' },
+          { value: mcq.optionB, label: 'B' },
+          { value: mcq.optionC, label: 'C' },
+          { value: mcq.optionD, label: 'D' }
+        ]
       }));
 
       const transformedProgrammingQuestions = examData.programmingQuestions.map(q => ({
@@ -136,7 +293,6 @@ const CandidatePage = () => {
         programmingQuestions: transformedProgrammingQuestions
       });
 
-      setExamStarted(false);
       setCurrentQuestionIndex(0);
       setAnswers({});
     } catch (error) {
@@ -156,9 +312,22 @@ const CandidatePage = () => {
       return;
     }
 
-    setExamStarted(true);
-    const allQuestions = [...selectedExam.mcqs, ...selectedExam.programmingQuestions];
-    setCurrentQuestion(allQuestions[0]);
+    const confirmed = window.confirm(
+      'Important Instructions:\n\n' +
+      '1. Do not switch tabs or windows during the exam\n' +
+      '2. The exam will auto-submit if you switch tabs\n' +
+      '3. The exam will auto-submit when the time is up\n' +
+      `4. You have ${selectedExam.duration} minutes to complete the exam\n\n` +
+      'Are you ready to start?'
+    );
+
+    if (confirmed) {
+      setExamStarted(true);
+      setWarningShown(false);
+      setExamTimer(selectedExam.duration * 60); // Set initial timer value
+      const allQuestions = [...selectedExam.mcqs, ...selectedExam.programmingQuestions];
+      setCurrentQuestion(allQuestions[0]);
+    }
   };
 
   const handleNextQuestion = () => {
@@ -174,73 +343,28 @@ const CandidatePage = () => {
   const handlePreviousQuestion = () => {
     if (!selectedExam) return;
 
-    const allQuestions = [...selectedExam.mcqs, ...selectedExam.programmingQuestions];
     if (currentQuestionIndex > 0) {
       setCurrentQuestionIndex(prev => prev - 1);
+      const allQuestions = [...selectedExam.mcqs, ...selectedExam.programmingQuestions];
       setCurrentQuestion(allQuestions[currentQuestionIndex - 1]);
     }
   };
 
-   const handleAnswerSubmit = (answer) => {
-      if (!currentQuestion) return;
+  const handleAnswerSubmit = (answer, optionLabel = null) => {
+    if (!currentQuestion) return;
 
+    if ('options' in currentQuestion) {
       setAnswers(prev => ({
         ...prev,
-        [currentQuestion.id]: answer,
+        [currentQuestion.id]: optionLabel
       }));
-    };
-
-    const submitExam = async () => {
-      const token = localStorage.getItem('token');
-      const mcqAnswers = Object.entries(answers)
-        .filter(([_, value]) => typeof value === 'string')
-        .map(([questionId, answer]) => {
-          const mcqQuestion = selectedExam.mcqs.find(mcq => mcq.id === parseInt(questionId));
-
-          if (!mcqQuestion) {
-            console.error(`MCQ question with ID ${questionId} not found.`);
-            return null;
-          }
-
-          const isCorrect = mcqQuestion.correctOption === answer;
-
-          return {
-            candidateId,
-            examId: selectedExam.examId,
-            questionId,
-            selectedOption: answer,
-            isCorrect,
-          };
-        })
-        .filter(answer => answer !== null);
-
-      const programmingAnswers = Object.entries(answers)
-        .filter(([_, value]) => typeof value !== 'string')
-        .map(([questionId, answer]) => ({
-          candidateId,
-          examId: selectedExam.examId,
-          questionId,
-          solutionCode: answer,
-        }));
-
-      try {
-        const response = await fetch(`http://localhost:8080/api/answers/submit`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ candidateId, examId: selectedExam.examId, mcqAnswers, programmingAnswers }),
-        });
-
-        if (!response.ok) throw new Error('Failed to submit exam');
-        alert('Exam submitted successfully!');
-        navigate('/results');
-      } catch (error) {
-        console.error('Error submitting exam:', error);
-        alert('Error submitting exam');
-      }
-    };
+    } else {
+      setAnswers(prev => ({
+        ...prev,
+        [currentQuestion.id]: answer
+      }));
+    }
+  };
 
 
   const formatDateTime = (date, time) => {
@@ -251,9 +375,16 @@ const CandidatePage = () => {
     }
   };
 
-  const handleLogout = () => {
-    logout();
-    navigate('/');
+  const renderTimer = () => {
+    if (!examTimer && !examStarted) return null;
+
+    const timeColor = examTimer <= 300 ? 'text-red-600' : 'text-green-600';
+
+    return (
+      <div className={`fixed top-4 right-4 p-4 bg-white rounded-lg shadow-lg ${timeColor} font-bold text-xl`}>
+        Time Remaining: {formatTime(examTimer)}
+      </div>
+    );
   };
 
   const renderQuestion = () => {
@@ -271,12 +402,14 @@ const CandidatePage = () => {
                   type="radio"
                   id={`option-${index}`}
                   name="mcq-answer"
-                  value={option}
-                  checked={answers[currentQuestion.id] === option}
-                  onChange={() => handleAnswerSubmit(option)}
+                  value={option.value}
+                  checked={answers[currentQuestion.id] === option.label}
+                  onChange={() => handleAnswerSubmit(option.value, option.label)}
                   className="h-4 w-4"
                 />
-                <label htmlFor={`option-${index}`} className="ml-2">{option}</label>
+                <label htmlFor={`option-${index}`} className="ml-2">
+                  {option.label}. {option.value}
+                </label>
               </div>
             ))}
           </div>
@@ -300,86 +433,128 @@ const CandidatePage = () => {
 
   return (
     <div className="container mx-auto p-4">
+      {renderTimer()}
+
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Candidate Dashboard</h1>
         <button
           onClick={handleLogout}
-          className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
-        >
-          Logout
-        </button>
-      </div>
+            className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+          >
+            Logout
+          </button>
+        </div>
 
-      {loading ? (
-        <p>Loading exams...</p>
-      ) : error ? (
-        <p className="text-red-500">{error}</p>
-      ) : !examStarted ? (
-        <div className="space-y-4">
-          {!selectedExam ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {exams.map((exam) => (
-                <div
-                  key={exam.examId}
-                  className="p-4 border rounded-lg shadow hover:shadow-lg transition-shadow cursor-pointer bg-white"
-                  onClick={() => handleExamSelect(exam.examId)}
+        {loading ? (
+          <p>Loading exams...</p>
+        ) : error ? (
+          <p className="text-red-500">{error}</p>
+        ) : !examStarted ? (
+          <div className="space-y-6">
+            <h2 className="text-xl font-semibold">Available Exams</h2>
+            {exams.length === 0 ? (
+              <p>No exams are currently available.</p>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {exams.map((exam) => (
+                  <div
+                    key={exam.examId}
+                    className="p-4 border rounded-lg shadow hover:shadow-md transition-shadow"
+                  >
+                    <h3 className="font-semibold">{exam.examName}</h3>
+                    <p>Duration: {exam.duration} minutes</p>
+                    <p>Start: {formatDateTime(exam.examStartDate, exam.examStartTime)}</p>
+                    <p>End: {formatDateTime(exam.examEndDate, exam.examEndTime)}</p>
+                    <button
+                      onClick={() => handleExamSelect(exam.examId)}
+                      className={`mt-2 px-4 py-2 rounded ${
+                        selectedExam?.examId === exam.examId
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-gray-200 hover:bg-gray-300'
+                      }`}
+                    >
+                      Select
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {selectedExam && (
+              <div className="mt-6 p-4 border rounded-lg">
+                <h3 className="text-lg font-semibold mb-2">Selected Exam: {selectedExam.examName}</h3>
+                <p>Total Questions: {selectedExam.mcqs.length + selectedExam.programmingQuestions.length}</p>
+                <p>MCQs: {selectedExam.mcqs.length}</p>
+                <p>Programming Questions: {selectedExam.programmingQuestions.length}</p>
+                <button
+                  onClick={startExam}
+                  className="mt-4 px-6 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
                 >
-                  <h2 className="text-xl font-semibold mb-2">{exam.title}</h2>
-                  <p className="text-gray-600">Start: {formatDateTime(exam.examStartDate, exam.examStartTime)}</p>
-                  <p className="text-gray-600">End: {formatDateTime(exam.examEndDate, exam.examEndTime)}</p>
-                  <p className="text-gray-600">Duration: {exam.duration} minutes</p>
-                  <p className="text-gray-600">Total Questions: {exam.totalQuestions}</p>
-                </div>
+                  Start Exam
+                </button>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-6">
+            <div className="bg-white p-6 rounded-lg shadow">
+              {renderQuestion()}
+
+              <div className="mt-6 flex justify-between">
+                <button
+                  onClick={handlePreviousQuestion}
+                  disabled={currentQuestionIndex === 0}
+                  className={`px-4 py-2 rounded ${
+                    currentQuestionIndex === 0
+                      ? 'bg-gray-300 cursor-not-allowed'
+                      : 'bg-blue-500 text-white hover:bg-blue-600'
+                  }`}
+                >
+                  Previous
+                </button>
+
+                {currentQuestionIndex === selectedExam.mcqs.length + selectedExam.programmingQuestions.length - 1 ? (
+                  <button
+                    onClick={() => submitExam(false)}
+                    className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+                  >
+                    Submit Exam
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleNextQuestion}
+                    className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                  >
+                    Next
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="mt-4 grid grid-cols-8 gap-2">
+              {[...selectedExam.mcqs, ...selectedExam.programmingQuestions].map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => {
+                    setCurrentQuestionIndex(index);
+                    setCurrentQuestion([...selectedExam.mcqs, ...selectedExam.programmingQuestions][index]);
+                  }}
+                  className={`p-2 rounded ${
+                    currentQuestionIndex === index
+                      ? 'bg-blue-500 text-white'
+                      : answers[[...selectedExam.mcqs, ...selectedExam.programmingQuestions][index].id]
+                      ? 'bg-green-200'
+                      : 'bg-gray-200'
+                  }`}
+                >
+                  {index + 1}
+                </button>
               ))}
             </div>
-          ) : (
-            <div className="border rounded-lg p-6 bg-white shadow">
-              <h2 className="text-xl font-semibold mb-4">{selectedExam.title}</h2>
-              <p className="mb-2">Duration: {selectedExam.duration} minutes</p>
-              <p className="mb-2">Total Questions: {selectedExam.totalQuestions}</p>
-              <p className="mb-2">Total Marks: {selectedExam.totalMarks}</p>
-              <p className="mb-4">Passing Score: {selectedExam.passingScore}</p>
-              <button
-                onClick={startExam}
-                className="mt-4 px-6 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-              >
-                Start Exam
-              </button>
-            </div>
-          )}
-        </div>
-      ) : (
-        <div className="border rounded-lg p-6 bg-white shadow">
-          {renderQuestion()}
-          <div className="flex justify-between mt-6">
-            <button
-              onClick={handlePreviousQuestion}
-              disabled={currentQuestionIndex === 0}
-              className={`px-4 py-2 rounded ${
-                currentQuestionIndex === 0
-                  ? 'bg-gray-300 cursor-not-allowed'
-                  : 'bg-blue-500 hover:bg-blue-600'
-              } text-white transition-colors`}
-            >
-              Previous
-            </button>
-            <button
-              onClick={handleNextQuestion}
-              disabled={currentQuestionIndex === (selectedExam?.mcqs.length + selectedExam?.programmingQuestions.length - 1)}
-              className={`px-4 py-2 rounded ${
-                currentQuestionIndex === (selectedExam?.mcqs.length + selectedExam?.programmingQuestions.length - 1)
-                  ? 'bg-gray-300 cursor-not-allowed'
-                  : 'bg-blue-500 hover:bg-blue-600'
-              } text-white transition-colors`}
-            >
-              Next
-            </button>
           </div>
-           <button onClick={submitExam} className="btn btn-primary mt-4">Submit Exam</button>
-        </div>
-      )}
-    </div>
-  );
-};
+        )}
+      </div>
+    );
+  };
 
-export default CandidatePage;
+  export default CandidatePage;

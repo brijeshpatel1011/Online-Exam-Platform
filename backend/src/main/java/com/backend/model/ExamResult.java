@@ -23,13 +23,25 @@ public class ExamResult {
     @JoinColumn(name = "exam_id", nullable = false)
     private Exam exam;
 
-    @Column(name = "total_questions", nullable = false)
+    @Column(nullable = false)
     private Integer totalQuestions;
 
-    @Column(name = "correct_answers", nullable = false)
+    @Column(nullable = false)
     private Integer correctAnswers;
 
-    @Column(name = "submitted_at", nullable = false)
+    @Column(nullable = false)
+    private Double mcqScore;
+
+    @Column(nullable = false)
+    private Double programmingScore;
+
+    @Column(nullable = false)
+    private Double totalScore;
+
+    @Column(nullable = false)
+    private Boolean passed;
+
+    @Column(name = "submitted_at", nullable = false, updatable = false)
     @Temporal(TemporalType.TIMESTAMP)
-    private Date submittedAt = new Date();
+    private Date submittedAt;
 }
