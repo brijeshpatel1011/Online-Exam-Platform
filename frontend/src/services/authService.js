@@ -10,8 +10,8 @@ export const loginExaminer = async (data) => {
   const response = await axios.post(`${API_URL}/login/examiner`, data);
   if (response.data.token) {
     localStorage.setItem('token', response.data.token);
-    localStorage.setItem('role', 'examiner'); // Store role
-    localStorage.setItem('examinerId', response.data.id); // Store examiner ID
+    localStorage.setItem('role', 'examiner');
+    localStorage.setItem('examinerId', response.data.id);
   }
   return response.data;
 };

@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { logout } from '../services/authService';
 
+import ProgrammingQuestionEditor from './ProgrammingQuestionEditor';
+
 const CandidatePage = () => {
   const navigate = useNavigate();
   const [exams, setExams] = useState([]);
@@ -17,7 +19,6 @@ const CandidatePage = () => {
 
   const candidateId = localStorage.getItem('candidateId');
 
-  // Format time function
   const formatTime = (seconds) => {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
@@ -25,7 +26,6 @@ const CandidatePage = () => {
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Prevent copy/paste and other browser actions
   useEffect(() => {
     const handleCopyPaste = (e) => e.preventDefault();
     const handleContextMenu = (e) => e.preventDefault();
@@ -53,7 +53,6 @@ const CandidatePage = () => {
     };
   }, []);
 
-  // Initial authentication check
   useEffect(() => {
     if (!candidateId) {
       navigate('/login');
@@ -62,127 +61,129 @@ const CandidatePage = () => {
     fetchExams();
   }, [candidateId, navigate]);
 
-  // Move handleLogout before submitExam to avoid dependency issues
   const handleLogout = useCallback(() => {
     logout();
     navigate('/');
   }, [navigate]);
 
 
- const submitExam = useCallback(async (isAutoSubmit = false) => {
-     try {
-       const token = localStorage.getItem('token');
-       const candidateId = localStorage.getItem('candidateId');
+const submitExam = useCallback(async (isAutoSubmit = false) => {
+  try {
+    const token = localStorage.getItem('token');
+    const candidateId = localStorage.getItem('candidateId');
+    if (!token || !candidateId) {
+      alert('Session expired. Please login again.');
+      handleLogout();
+      return;
+    }
 
-       if (!token || !candidateId) {
-         alert('Session expired. Please login again.');
-         handleLogout();
-         return;
-       }
+    const mcqAnswers = selectedExam.mcqs
+      .map(mcq => ({
+        question: { id: mcq.id },
+        selectedOption: answers[mcq.id] || ''
+      }))
+      .filter(answer => answer.selectedOption !== '');
 
-       const mcqAnswers = selectedExam.mcqs
-         .map(mcq => ({
-           question: { id: mcq.id },
-           selectedOption: answers[mcq.id] || ''
-         }))
-         .filter(answer => answer.selectedOption !== '');
+    const programmingAnswers = selectedExam.programmingQuestions
+      .map(q => ({
+        question: { id: q.id },
+        solutionCode: answers[q.id] || ''
+      }))
+      .filter(answer => answer.solutionCode !== '');
 
-       const programmingAnswers = selectedExam.programmingQuestions
-         .map(q => ({
-           question: { id: q.id },
-           solutionCode: answers[q.id] || ''
-         }))
-         .filter(answer => answer.solutionCode !== '');
+    const timeSpent = selectedExam.duration * 60 - examTimer;
+    const url = `http://localhost:8080/api/answers/submit?candidateId=${candidateId}&examId=${selectedExam.examId}`;
 
-       const timeSpent = selectedExam.duration * 60 - examTimer;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        mcqAnswers,
+        programmingAnswers,
+        isAutoSubmit,
+        timeSpent
+      })
+    });
 
+    const result = await response.json();
 
-       const url = `http://localhost:8080/api/answers/submit?candidateId=${candidateId}&examId=${selectedExam.examId}`;
-
-       const response = await fetch(url, {
-         method: 'POST',
-         headers: {
-           'Authorization': `Bearer ${token}`,
-           'Content-Type': 'application/json',
-         },
-         body: JSON.stringify({
-           mcqAnswers,
-           programmingAnswers,
-           isAutoSubmit,
-           timeSpent
-         })
-       });
-
-       // Rest of the function remains the same
-       if (!response.ok) {
-         if (response.status === 403 || response.status === 401) {
-           throw new Error('Session expired');
-         }
-         const errorText = await response.text();
-         throw new Error(errorText || 'Failed to submit exam');
-       }
-
-       const result = await response.json();
-
-       if (result.success) {
-         alert(isAutoSubmit ? 'Exam auto-submitted due to time completion or tab change.' : 'Exam submitted successfully!');
-         navigate('/results');
-       } else {
-         throw new Error(result.message || 'Failed to submit exam');
-       }
-     } catch (error) {
-       console.error('Error submitting exam:', error);
-
-       if (error.message.includes('Session expired') || error.message.includes('Unauthorized')) {
-         alert('Session expired. Please login again.');
-         handleLogout();
-       } else if (isAutoSubmit) {
-         alert('Auto-submission failed. Please retry.');
-       } else {
-         alert(`Error submitting exam: ${error.message}`);
-       }
-     }
-   }, [selectedExam, answers, examTimer, navigate, handleLogout]);
-
-  // Updated timer effect with all dependencies
-    useEffect(() => {
-      let timerInterval;
-
-      if (examStarted && selectedExam?.duration) {
-        const totalSeconds = selectedExam.duration * 60;
-
-        if (!examTimer) {
-          setExamTimer(totalSeconds);
-        }
-
-        timerInterval = setInterval(() => {
-          setExamTimer((prevTime) => {
-            if (prevTime <= 0) {
-              clearInterval(timerInterval);
-              submitExam(true);
-              return 0;
-            }
-
-            if (prevTime === 300 && !warningShown) {
-              alert('5 minutes remaining!');
-              setWarningShown(true);
-            }
-
-            return prevTime - 1;
-          });
-        }, 1000);
+    if (!response.ok) {
+      if (response.status === 403 || response.status === 401) {
+        throw new Error('Session expired');
       }
+      throw new Error(result.message || 'Failed to submit exam');
+    }
 
-      return () => {
-        if (timerInterval) {
-          clearInterval(timerInterval);
-        }
-      };
-    }, [examStarted, selectedExam, warningShown, examTimer, submitExam]);
+    const successModal = document.createElement('div');
+    successModal.style.cssText = `
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      z-index: 1000;
+      text-align: center;
+      min-width: 300px;
+    `;
+
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 999;
+    `;
+
+    successModal.innerHTML = `
+      <h2 style="color: #059669; font-size: 1.5rem; margin-bottom: 1rem;">✅ Exam Submitted Successfully!</h2>
+      <p style="color: #374151; margin-bottom: 1.5rem;">${
+        isAutoSubmit
+          ? 'Your exam has been auto-submitted due to time completion or tab change.'
+          : 'Your exam has been submitted successfully.'
+      }</p>
+      <button onClick={handleLogout} style="
+        background: #059669;
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        border: none;
+        cursor: pointer;
+      ">Okay</button>
+    `;
+
+    document.body.appendChild(overlay);
+    document.body.appendChild(successModal);
+
+    const continueButton = successModal.querySelector('button');
+    continueButton.onclick = () => {
+      document.body.removeChild(overlay);
+      document.body.removeChild(successModal);
+      navigate('/candidate-login');
+    };
+
+  } catch (error) {
+    console.error('Error submitting exam:', error);
+    if (error.message.includes('Session expired') || error.message.includes('Unauthorized')) {
+      alert('Session expired. Please login again.');
+      handleLogout();
+    } else if (isAutoSubmit) {
+      alert('Auto-submission failed. Please retry.');
+    } else {
+      alert(error.message || 'Failed to submit exam');
+    }
+  }
+}, [selectedExam, answers, examTimer, navigate, handleLogout]);
 
 
-
-  // Updated tab change detection effect with submitExam dependency
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (examStarted && document.visibilityState === 'hidden') {
@@ -196,10 +197,6 @@ const CandidatePage = () => {
 
 
 
-
-
-
-  // Fetch exams
   const fetchExams = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -258,7 +255,6 @@ const CandidatePage = () => {
     }
   };
 
-  // Handle exam selection
   const handleExamSelect = async (examId) => {
     try {
       const token = localStorage.getItem('token');
@@ -304,11 +300,22 @@ const CandidatePage = () => {
   const startExam = () => {
     if (!selectedExam) return;
 
-    const examDateTime = new Date(`${selectedExam.examStartDate}T${selectedExam.examStartTime}`);
-    const currentDate = new Date();
+    const examStartDateTime = new Date(`${selectedExam.examStartDate}T${selectedExam.examStartTime}`);
+    const examEndDateTime = new Date(`${selectedExam.examEndDate}T${selectedExam.examEndTime}`);
+    const currentDateTime = new Date();
 
-    if (examDateTime > currentDate) {
+    if (examStartDateTime > currentDateTime) {
       alert('This exam has not started yet.');
+      return;
+    }
+
+    const remainingTimeInSeconds = Math.floor((examEndDateTime - currentDateTime) / 1000);
+    const maxExamTimeInSeconds = selectedExam.duration * 60;
+
+    const actualTimeInSeconds = Math.min(remainingTimeInSeconds, maxExamTimeInSeconds);
+
+    if (actualTimeInSeconds <= 0) {
+      alert('This exam has ended.');
       return;
     }
 
@@ -317,14 +324,14 @@ const CandidatePage = () => {
       '1. Do not switch tabs or windows during the exam\n' +
       '2. The exam will auto-submit if you switch tabs\n' +
       '3. The exam will auto-submit when the time is up\n' +
-      `4. You have ${selectedExam.duration} minutes to complete the exam\n\n` +
+      `4. You have ${Math.ceil(actualTimeInSeconds / 60)} minutes to complete the exam\n\n` +
       'Are you ready to start?'
     );
 
     if (confirmed) {
       setExamStarted(true);
       setWarningShown(false);
-      setExamTimer(selectedExam.duration * 60); // Set initial timer value
+      setExamTimer(actualTimeInSeconds);
       const allQuestions = [...selectedExam.mcqs, ...selectedExam.programmingQuestions];
       setCurrentQuestion(allQuestions[0]);
     }
@@ -365,7 +372,6 @@ const CandidatePage = () => {
       }));
     }
   };
-
 
   const formatDateTime = (date, time) => {
     try {
@@ -417,16 +423,14 @@ const CandidatePage = () => {
       );
     } else {
       return (
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold">Programming Question {currentQuestionIndex + 1}</h3>
-          <p className="whitespace-pre-wrap">{currentQuestion.question}</p>
-          <textarea
-            value={answers[currentQuestion.id] || ''}
-            onChange={(e) => handleAnswerSubmit(e.target.value)}
-            className="w-full h-48 p-2 border rounded resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Write your code here..."
-          />
-        </div>
+         <div className="space-y-4">
+           <h3 className="text-lg font-semibold">Programming Question {currentQuestionIndex + 1}</h3>
+           <p className="whitespace-pre-wrap">{currentQuestion.question}</p>
+           <ProgrammingQuestionEditor
+             value={answers[currentQuestion.id] || ''}
+             onChange={(value) => handleAnswerSubmit(value)}
+           />
+         </div>
       );
     }
   };

@@ -11,4 +11,7 @@ import java.util.List;
 @Repository
 public interface ProgrammingAnswerRepository extends JpaRepository<ProgrammingAnswer, Long> {
     List<ProgrammingAnswer> findByCandidateAndExam(Candidate candidate, Exam exam);
+
+    List<ProgrammingAnswer> findByExam_ExamId(Integer examId);
+    List<ProgrammingAnswer> findByExam_ExamIdAndCandidate_cId(Integer examId, Long candidateId);
 }

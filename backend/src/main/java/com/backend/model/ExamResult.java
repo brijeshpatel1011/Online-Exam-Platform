@@ -30,7 +30,7 @@ public class ExamResult {
     private Integer correctAnswers;
 
     @Column(nullable = false)
-    private Double mcqScore;
+    private int mcqScore;
 
     @Column(nullable = false)
     private Double programmingScore;

@@ -41,11 +41,8 @@ public class AnswerService {
         Exam exam = examRepository.findById(examId)
                 .orElseThrow(() -> new EntityNotFoundException("Exam not found: " + examId));
 
-        int mcqMarksObtained = 0;
-        int totalMcqMarks = 0;
-        int correctAnswersCount = 0;
-        int totalProgrammingMarks = 0;
-        double programmingScore = 0.0;
+        int correctMcqCount = 0;
+        int totalMcqQuestions = mcqAnswers != null ? mcqAnswers.size() : 0;
 
         if (mcqAnswers != null && !mcqAnswers.isEmpty()) {
             for (MCQAnswers answer : mcqAnswers) {
@@ -66,15 +63,13 @@ public class AnswerService {
                 newAnswer.setIsCorrect(isCorrect);
                 mcqAnswersRepository.save(newAnswer);
 
-                totalMcqMarks += question.getMarks();
                 if (isCorrect) {
-                    mcqMarksObtained += question.getMarks();
-                    correctAnswersCount++;
+                    correctMcqCount++;
                 }
             }
         }
 
-        double mcqScore = (totalMcqMarks > 0) ? ((double) mcqMarksObtained / totalMcqMarks) * 100.0 : 0.0;
+        double mcqScore = correctMcqCount;
 
         if (programmingAnswers != null && !programmingAnswers.isEmpty()) {
             for (ProgrammingAnswer answer : programmingAnswers) {
@@ -88,28 +83,18 @@ public class AnswerService {
                 newAnswer.setSolutionCode(answer.getSolutionCode());
                 newAnswer.setSubmittedAt(new Date());
                 programmingAnswerRepository.save(newAnswer);
-
-                totalProgrammingMarks += question.getMarks();
             }
         }
 
-        int totalQuestions = (mcqAnswers != null ? mcqAnswers.size() : 0) +
-                (programmingAnswers != null ? programmingAnswers.size() : 0);
-
-        double totalScore;
-        if (totalProgrammingMarks > 0) {
-            totalScore = (mcqScore + programmingScore) / 2.0;
-        } else {
-            totalScore = mcqScore;
-        }
+        double totalScore = mcqScore;
 
         ExamResult result = new ExamResult();
         result.setCandidate(candidate);
         result.setExam(exam);
-        result.setTotalQuestions(totalQuestions);
-        result.setCorrectAnswers(correctAnswersCount);
-        result.setMcqScore(mcqScore);
-        result.setProgrammingScore(programmingScore);
+        result.setTotalQuestions(totalMcqQuestions + (programmingAnswers != null ? programmingAnswers.size() : 0));
+        result.setCorrectAnswers(correctMcqCount);
+        result.setMcqScore(correctMcqCount);
+        result.setProgrammingScore(0.0);
         result.setTotalScore(totalScore);
         result.setPassed(totalScore >= exam.getPassingScore());
         result.setSubmittedAt(new Date());
@@ -119,8 +104,9 @@ public class AnswerService {
         System.out.println("Exam Submission Details:");
         System.out.println("Candidate ID: " + candidateId);
         System.out.println("Exam ID: " + examId);
+        System.out.println("Total MCQ Questions: " + totalMcqQuestions);
+        System.out.println("Correct MCQ Answers: " + correctMcqCount);
         System.out.println("MCQ Score: " + mcqScore);
-        System.out.println("Programming Score: " + programmingScore);
         System.out.println("Total Score: " + totalScore);
         System.out.println("Result ID: " + savedResult.getId());
 

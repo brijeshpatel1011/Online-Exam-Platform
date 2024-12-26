@@ -5,6 +5,7 @@ import { Search, UserPlus, Users, FileText, LogOut, Filter, Trash2, Edit } from 
 import { getToken, logout } from '../services/authService';
 import Exam from '../components/Exam';
 import CombinedQuestions from '../components/CombinedQuestions';
+import Result from '../components/Result';
 
 const AdminPage = () => {
   const navigate = useNavigate();
@@ -317,6 +318,17 @@ const handleEdit = (candidate) => {
               <FileText className="h-4 w-4 mr-3" />
               Exams
             </button>
+            <button
+              onClick={() => setActiveTab('Result')}
+              className={`w-full flex items-center px-4 py-2 text-sm font-medium rounded-md ${
+                activeTab === 'Result'
+                  ? 'bg-blue-100 text-blue-700'
+                  : 'text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              <FileText className="h-4 w-4 mr-3" />
+              Result
+            </button>
 
           </div>
 
@@ -452,6 +464,7 @@ const handleEdit = (candidate) => {
 
              {activeTab === 'Questions' && <CombinedQuestions />}
              {activeTab === 'Exams' && <Exam />}
+             {activeTab === 'Result' && <Result />}
 
           </div>
         </div>

@@ -21,7 +21,7 @@ public class JwtTokenProvider {
     public String generateToken(String email, Long id) {
         return Jwts.builder()
                 .setSubject(email)
-                .claim("id", id)  // Add ID to the token
+                .claim("id", id)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(new Date().getTime() + jwtExpirationMs))
                 .signWith(SignatureAlgorithm.HS512, jwtSecret)

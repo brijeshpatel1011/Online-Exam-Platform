@@ -25,17 +25,14 @@ public class ExamService {
     @Autowired
     private ProgrammingQuestionRepository programmingQuestionRepository;
 
-    // Fetch all exams
     public List<Exam> getAllExams() {
         return examRepository.findAll();
     }
 
-    // Fetch an exam by ID
     public Optional<Exam> getExamById(int examId) {
         return examRepository.findById(examId);
     }
 
-    // Create an exam
     public Exam createExam(Exam exam) {
         int programmingQuestionsCount = 3;
 
@@ -59,12 +56,10 @@ public class ExamService {
         return examRepository.save(exam);
     }
 
-    // Update an existing exam along with questions
     public Exam updateExam(int examId, Exam examDetails) {
         Exam existingExam = examRepository.findById(examId)
                 .orElseThrow(() -> new IllegalArgumentException("Exam with ID " + examId + " does not exist."));
 
-        // Update exam details
         existingExam.setTitle(examDetails.getTitle());
         existingExam.setDescription(examDetails.getDescription());
         existingExam.setTotalQuestions(examDetails.getTotalQuestions());
@@ -76,7 +71,6 @@ public class ExamService {
         existingExam.setExamEndDate(examDetails.getExamEndDate());
         existingExam.setExamEndTime(examDetails.getExamEndTime());
 
-        // Update associated questions
         int programmingQuestionsCount = 3;
 
         if (examDetails.getTotalQuestions() < programmingQuestionsCount) {
@@ -99,7 +93,6 @@ public class ExamService {
         return examRepository.save(existingExam);
     }
 
-    // Delete an exam by ID
     public void deleteExamById(int examId) {
         if (examRepository.existsById(examId)) {
             examRepository.deleteById(examId);
@@ -108,12 +101,10 @@ public class ExamService {
         }
     }
 
-    // Fetch exams by college
     public List<Exam> getExamsByCollege(String college) {
         return examRepository.findByCollege(college);
     }
 
-    // Fetch exams by start date range
     public List<Exam> getExamsByDateRange(LocalDate startDate, LocalDate endDate) {
         return examRepository.findByExamStartDateBetween(startDate, endDate);
     }
