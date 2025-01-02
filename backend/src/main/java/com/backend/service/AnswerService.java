@@ -34,82 +34,101 @@ public class AnswerService {
     @Autowired
     private ProgrammingQuestionRepository programmingQuestionRepository;
 
+    @Autowired
+    private ExamLogService examLogService;
+
     public ExamResult submitExam(Long candidateId, int examId, List<MCQAnswers> mcqAnswers, List<ProgrammingAnswer> programmingAnswers) {
-        Candidate candidate = candidateRepository.findById(candidateId)
-                .orElseThrow(() -> new EntityNotFoundException("Candidate not found: " + candidateId));
 
-        Exam exam = examRepository.findById(examId)
-                .orElseThrow(() -> new EntityNotFoundException("Exam not found: " + examId));
+        examLogService.logExamEvent(candidateId, examId, 3);
 
-        int correctMcqCount = 0;
-        int totalMcqQuestions = mcqAnswers != null ? mcqAnswers.size() : 0;
+        try {
 
-        if (mcqAnswers != null && !mcqAnswers.isEmpty()) {
-            for (MCQAnswers answer : mcqAnswers) {
-                MCQ question = mcqRepository.findById(answer.getQuestion().getId())
-                        .orElseThrow(() -> new EntityNotFoundException("MCQ not found: " + answer.getQuestion().getId()));
 
-                MCQAnswers newAnswer = new MCQAnswers();
-                newAnswer.setCandidate(candidate);
-                newAnswer.setExam(exam);
-                newAnswer.setQuestion(question);
-                newAnswer.setSelectedOption(answer.getSelectedOption());
-                newAnswer.setSubmittedAt(new Date());
+            Candidate candidate = candidateRepository.findById(candidateId)
+                    .orElseThrow(() -> new EntityNotFoundException("Candidate not found: " + candidateId));
 
-                boolean isCorrect = question.getCorrectAnswer() != null &&
-                        answer.getSelectedOption() != null &&
-                        answer.getSelectedOption().trim().equalsIgnoreCase(question.getCorrectAnswer().trim());
+            Exam exam = examRepository.findById(examId)
+                    .orElseThrow(() -> new EntityNotFoundException("Exam not found: " + examId));
 
-                newAnswer.setIsCorrect(isCorrect);
-                mcqAnswersRepository.save(newAnswer);
+            int correctMcqCount = 0;
+            int totalMcqQuestions = mcqAnswers != null ? mcqAnswers.size() : 0;
 
-                if (isCorrect) {
-                    correctMcqCount++;
+            if (mcqAnswers != null && !mcqAnswers.isEmpty()) {
+                for (MCQAnswers answer : mcqAnswers) {
+                    MCQ question = mcqRepository.findById(answer.getQuestion().getId())
+                            .orElseThrow(() -> new EntityNotFoundException("MCQ not found: " + answer.getQuestion().getId()));
+
+                    MCQAnswers newAnswer = new MCQAnswers();
+                    newAnswer.setCandidate(candidate);
+                    newAnswer.setExam(exam);
+                    newAnswer.setQuestion(question);
+                    newAnswer.setSelectedOption(answer.getSelectedOption());
+                    newAnswer.setSubmittedAt(new Date());
+
+                    boolean isCorrect = question.getCorrectAnswer() != null &&
+                            answer.getSelectedOption() != null &&
+                            answer.getSelectedOption().trim().equalsIgnoreCase(question.getCorrectAnswer().trim());
+
+                    newAnswer.setIsCorrect(isCorrect);
+                    mcqAnswersRepository.save(newAnswer);
+
+                    if (isCorrect) {
+                        correctMcqCount++;
+                    }
                 }
             }
-        }
 
-        double mcqScore = correctMcqCount;
+            double mcqScore = correctMcqCount;
 
-        if (programmingAnswers != null && !programmingAnswers.isEmpty()) {
-            for (ProgrammingAnswer answer : programmingAnswers) {
-                ProgrammingQuestion question = programmingQuestionRepository.findById(answer.getQuestion().getId())
-                        .orElseThrow(() -> new EntityNotFoundException("Programming question not found: " + answer.getQuestion().getId()));
+            if (programmingAnswers != null && !programmingAnswers.isEmpty()) {
+                for (ProgrammingAnswer answer : programmingAnswers) {
+                    ProgrammingQuestion question = programmingQuestionRepository.findById(answer.getQuestion().getId())
+                            .orElseThrow(() -> new EntityNotFoundException("Programming question not found: " + answer.getQuestion().getId()));
 
-                ProgrammingAnswer newAnswer = new ProgrammingAnswer();
-                newAnswer.setCandidate(candidate);
-                newAnswer.setExam(exam);
-                newAnswer.setQuestion(question);
-                newAnswer.setSolutionCode(answer.getSolutionCode());
-                newAnswer.setSubmittedAt(new Date());
-                programmingAnswerRepository.save(newAnswer);
+                    ProgrammingAnswer newAnswer = new ProgrammingAnswer();
+                    newAnswer.setCandidate(candidate);
+                    newAnswer.setExam(exam);
+                    newAnswer.setQuestion(question);
+                    newAnswer.setSolutionCode(answer.getSolutionCode());
+                    newAnswer.setSubmittedAt(new Date());
+                    programmingAnswerRepository.save(newAnswer);
+                }
             }
+
+            double totalScore = mcqScore;
+
+            ExamResult result = new ExamResult();
+            result.setCandidate(candidate);
+            result.setExam(exam);
+            result.setTotalQuestions(totalMcqQuestions + (programmingAnswers != null ? programmingAnswers.size() : 0));
+            result.setCorrectAnswers(correctMcqCount);
+            result.setMcqScore(correctMcqCount);
+            result.setProgrammingScore(0.0);
+            result.setTotalScore(totalScore);
+            result.setPassed(totalScore >= exam.getPassingScore());
+            result.setSubmittedAt(new Date());
+
+            ExamResult savedResult = examResultRepository.save(result);
+
+            System.out.println("Exam Submission Details:");
+            System.out.println("Candidate ID: " + candidateId);
+            System.out.println("Exam ID: " + examId);
+            System.out.println("Total MCQ Questions: " + totalMcqQuestions);
+            System.out.println("Correct MCQ Answers: " + correctMcqCount);
+            System.out.println("MCQ Score: " + mcqScore);
+            System.out.println("Total Score: " + totalScore);
+            System.out.println("Result ID: " + savedResult.getId());
+
+            if (savedResult.getPassed()) {
+                examLogService.logExamEvent(candidateId, examId, 5);
+            } else {
+                examLogService.logExamEvent(candidateId, examId, 6);
+            }
+
+            return savedResult;
+        }catch (Exception e) {
+            examLogService.logExamEvent(candidateId, examId, 4);
+            throw e;
         }
-
-        double totalScore = mcqScore;
-
-        ExamResult result = new ExamResult();
-        result.setCandidate(candidate);
-        result.setExam(exam);
-        result.setTotalQuestions(totalMcqQuestions + (programmingAnswers != null ? programmingAnswers.size() : 0));
-        result.setCorrectAnswers(correctMcqCount);
-        result.setMcqScore(correctMcqCount);
-        result.setProgrammingScore(0.0);
-        result.setTotalScore(totalScore);
-        result.setPassed(totalScore >= exam.getPassingScore());
-        result.setSubmittedAt(new Date());
-
-        ExamResult savedResult = examResultRepository.save(result);
-
-        System.out.println("Exam Submission Details:");
-        System.out.println("Candidate ID: " + candidateId);
-        System.out.println("Exam ID: " + examId);
-        System.out.println("Total MCQ Questions: " + totalMcqQuestions);
-        System.out.println("Correct MCQ Answers: " + correctMcqCount);
-        System.out.println("MCQ Score: " + mcqScore);
-        System.out.println("Total Score: " + totalScore);
-        System.out.println("Result ID: " + savedResult.getId());
-
-        return savedResult;
     }
 }
